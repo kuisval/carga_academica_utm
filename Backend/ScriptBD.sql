@@ -1,0 +1,330 @@
+-- =============================================================
+--  SISTEMA DE CARGA ACADÉMICA - UTM
+--  Base de datos SQL Server
+--  Adaptado desde MySQL para compatibilidad con SSMS
+-- =============================================================
+ 
+-- Crear y seleccionar la base de datos
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'carga_academica_utm')
+    CREATE DATABASE carga_academica_utm;
+GO
+ 
+USE carga_academica_utm;
+GO
+ 
+-- =============================================================
+--  1. CARRERA
+-- =============================================================
+CREATE TABLE carrera (
+    id_carrera  INT           NOT NULL IDENTITY(1,1),
+    clave       VARCHAR(20)   NOT NULL,
+    nombre      VARCHAR(100)  NOT NULL,
+    CONSTRAINT pk_carrera    PRIMARY KEY (id_carrera),
+    CONSTRAINT uk_carrera    UNIQUE (clave)
+);
+GO
+ 
+-- =============================================================
+--  2. ALUMNO
+--     tipo:        'regular' | 'irregular'
+--     estado_pago: 'vigente' | 'adeudo'
+-- =============================================================
+CREATE TABLE alumno (
+    id_alumno   INT           NOT NULL IDENTITY(1,1),
+    matricula   VARCHAR(20)   NOT NULL,
+    nombre      VARCHAR(150)  NOT NULL,
+    semestre    TINYINT       NOT NULL,
+    tipo        VARCHAR(10)   NOT NULL DEFAULT 'regular',
+    estado_pago VARCHAR(10)   NOT NULL DEFAULT 'adeudo',
+    id_carrera  INT           NOT NULL,
+    CONSTRAINT pk_alumno        PRIMARY KEY (id_alumno),
+    CONSTRAINT uk_alumno_mat    UNIQUE (matricula),
+    CONSTRAINT chk_alumno_tipo  CHECK (tipo IN ('regular','irregular')),
+    CONSTRAINT chk_alumno_pago  CHECK (estado_pago IN ('vigente','adeudo')),
+    CONSTRAINT fk_alumno_carrera FOREIGN KEY (id_carrera)
+        REFERENCES carrera(id_carrera)
+);
+GO
+ 
+-- =============================================================
+--  3. COORDINADOR
+-- =============================================================
+CREATE TABLE coordinador (
+    id_coordinador  INT          NOT NULL IDENTITY(1,1),
+    nombre          VARCHAR(150) NOT NULL,
+    clave           VARCHAR(20)  NOT NULL,
+    id_carrera      INT          NOT NULL,
+    CONSTRAINT pk_coordinador     PRIMARY KEY (id_coordinador),
+    CONSTRAINT uk_coordinador     UNIQUE (clave),
+    CONSTRAINT fk_coord_carrera   FOREIGN KEY (id_carrera)
+        REFERENCES carrera(id_carrera)
+);
+GO
+ 
+-- =============================================================
+--  4. DOCENTE
+-- =============================================================
+CREATE TABLE docente (
+    id_docente   INT          NOT NULL IDENTITY(1,1),
+    nombre       VARCHAR(150) NOT NULL,
+    especialidad VARCHAR(100) NOT NULL,
+    CONSTRAINT pk_docente PRIMARY KEY (id_docente)
+);
+GO
+ 
+-- =============================================================
+--  5. MATERIA
+-- =============================================================
+CREATE TABLE materia (
+    id_materia  INT          NOT NULL IDENTITY(1,1),
+    clave       VARCHAR(20)  NOT NULL,
+    nombre      VARCHAR(150) NOT NULL,
+    creditos    TINYINT      NOT NULL,
+    id_carrera  INT          NOT NULL,
+    CONSTRAINT pk_materia        PRIMARY KEY (id_materia),
+    CONSTRAINT uk_materia_clave  UNIQUE (clave),
+    CONSTRAINT fk_materia_carrera FOREIGN KEY (id_carrera)
+        REFERENCES carrera(id_carrera)
+);
+GO
+ 
+-- =============================================================
+--  6. AULA
+-- =============================================================
+CREATE TABLE aula (
+    id_aula   INT         NOT NULL IDENTITY(1,1),
+    numero    INT         NOT NULL,
+    edificio  VARCHAR(50) NOT NULL,
+    capacidad INT         NOT NULL,
+    CONSTRAINT pk_aula    PRIMARY KEY (id_aula),
+    CONSTRAINT uk_aula    UNIQUE (numero, edificio)
+);
+GO
+ 
+-- =============================================================
+--  7. HORARIO
+-- =============================================================
+CREATE TABLE horario (
+    id_horario  INT         NOT NULL IDENTITY(1,1),
+    dias        VARCHAR(50) NOT NULL,
+    hora_inicio TIME        NOT NULL,
+    hora_fin    TIME        NOT NULL,
+    CONSTRAINT pk_horario PRIMARY KEY (id_horario)
+);
+GO
+ 
+-- =============================================================
+--  8. OFERTA_ACADEMICA
+--     estado: 'borrador' | 'publicada'
+-- =============================================================
+CREATE TABLE oferta_academica (
+    id_oferta      INT         NOT NULL IDENTITY(1,1),
+    periodo        VARCHAR(20) NOT NULL,
+    estado         VARCHAR(10) NOT NULL DEFAULT 'borrador',
+    id_carrera     INT         NOT NULL,
+    id_coordinador INT         NOT NULL,
+    CONSTRAINT pk_oferta        PRIMARY KEY (id_oferta),
+    CONSTRAINT chk_oferta_estado CHECK (estado IN ('borrador','publicada')),
+    CONSTRAINT fk_oferta_carrera FOREIGN KEY (id_carrera)
+        REFERENCES carrera(id_carrera),
+    CONSTRAINT fk_oferta_coord  FOREIGN KEY (id_coordinador)
+        REFERENCES coordinador(id_coordinador)
+);
+GO
+ 
+-- =============================================================
+--  9. GRUPO
+--     estado: 'disponible' | 'lleno' | 'cancelado'
+--     uk_aula_horario:    un aula no puede tener 2 grupos a la vez
+--     uk_docente_horario: un docente no puede dar 2 grupos a la vez
+-- =============================================================
+CREATE TABLE grupo (
+    id_grupo        INT         NOT NULL IDENTITY(1,1),
+    clave           VARCHAR(20) NOT NULL,
+    cupo_max        INT         NOT NULL,
+    cupo_disponible INT         NOT NULL,
+    estado          VARCHAR(12) NOT NULL DEFAULT 'disponible',
+    id_materia      INT         NOT NULL,
+    id_docente      INT         NOT NULL,
+    id_aula         INT         NOT NULL,
+    id_horario      INT         NOT NULL,
+    id_oferta       INT         NOT NULL,
+    CONSTRAINT pk_grupo             PRIMARY KEY (id_grupo),
+    CONSTRAINT chk_grupo_estado     CHECK (estado IN ('disponible','lleno','cancelado')),
+    CONSTRAINT uk_aula_horario      UNIQUE (id_aula, id_horario),
+    CONSTRAINT uk_docente_horario   UNIQUE (id_docente, id_horario),
+    CONSTRAINT fk_grupo_materia     FOREIGN KEY (id_materia)
+        REFERENCES materia(id_materia),
+    CONSTRAINT fk_grupo_docente     FOREIGN KEY (id_docente)
+        REFERENCES docente(id_docente),
+    CONSTRAINT fk_grupo_aula        FOREIGN KEY (id_aula)
+        REFERENCES aula(id_aula),
+    CONSTRAINT fk_grupo_horario     FOREIGN KEY (id_horario)
+        REFERENCES horario(id_horario),
+    CONSTRAINT fk_grupo_oferta      FOREIGN KEY (id_oferta)
+        REFERENCES oferta_academica(id_oferta)
+);
+GO
+ 
+-- =============================================================
+-- 10. CARGA_ACADEMICA
+--     estado: 'en_proceso' | 'finalizada' | 'cancelada'
+--     id_horario_final: se asigna al finalizar (corrección 3.3)
+--     Un alumno solo puede tener una carga por periodo
+-- =============================================================
+CREATE TABLE carga_academica (
+    id_carga         INT         NOT NULL IDENTITY(1,1),
+    periodo          VARCHAR(20) NOT NULL,
+    estado           VARCHAR(11) NOT NULL DEFAULT 'en_proceso',
+    total_grupos     TINYINT     NOT NULL DEFAULT 0,
+    id_alumno        INT         NOT NULL,
+    id_horario_final INT         NULL,
+    CONSTRAINT pk_carga             PRIMARY KEY (id_carga),
+    CONSTRAINT chk_carga_estado     CHECK (estado IN ('en_proceso','finalizada','cancelada')),
+    CONSTRAINT uk_alumno_periodo    UNIQUE (id_alumno, periodo),
+    CONSTRAINT fk_carga_alumno      FOREIGN KEY (id_alumno)
+        REFERENCES alumno(id_alumno),
+    CONSTRAINT fk_carga_horario     FOREIGN KEY (id_horario_final)
+        REFERENCES horario(id_horario)
+);
+GO
+ 
+-- =============================================================
+-- 11. LINEA_CARGA
+--     Implementa la clase LineaCarga del diagrama de diseño.
+--     Cada fila = un grupo inscrito en la carga del alumno.
+--     Un alumno no puede inscribir el mismo grupo dos veces.
+-- =============================================================
+CREATE TABLE linea_carga (
+    id_linea  INT NOT NULL IDENTITY(1,1),
+    id_carga  INT NOT NULL,
+    id_grupo  INT NOT NULL,
+    CONSTRAINT pk_linea        PRIMARY KEY (id_linea),
+    CONSTRAINT uk_carga_grupo  UNIQUE (id_carga, id_grupo),
+    CONSTRAINT fk_linea_carga  FOREIGN KEY (id_carga)
+        REFERENCES carga_academica(id_carga),
+    CONSTRAINT fk_linea_grupo  FOREIGN KEY (id_grupo)
+        REFERENCES grupo(id_grupo)
+);
+GO
+ 
+-- =============================================================
+--  TRIGGERS
+-- =============================================================
+ 
+-- Al inscribir un grupo: reduce cupo y actualiza estado
+CREATE TRIGGER trg_linea_carga_insert
+ON linea_carga
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+ 
+    -- Reducir cupo del grupo
+    UPDATE grupo
+    SET
+        cupo_disponible = cupo_disponible - 1,
+        estado = CASE
+                    WHEN cupo_disponible - 1 <= 0 THEN 'lleno'
+                    ELSE 'disponible'
+                 END
+    WHERE id_grupo IN (SELECT id_grupo FROM inserted);
+ 
+    -- Incrementar contador de grupos en la carga
+    UPDATE carga_academica
+    SET total_grupos = total_grupos + 1
+    WHERE id_carga IN (SELECT id_carga FROM inserted);
+END;
+GO
+ 
+-- Al quitar un grupo: restaura cupo (flujo alternativo 5a CU1)
+CREATE TRIGGER trg_linea_carga_delete
+ON linea_carga
+AFTER DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+ 
+    -- Restaurar cupo del grupo
+    UPDATE grupo
+    SET
+        cupo_disponible = cupo_disponible + 1,
+        estado = 'disponible'
+    WHERE id_grupo IN (SELECT id_grupo FROM deleted);
+ 
+    -- Decrementar contador de grupos en la carga
+    UPDATE carga_academica
+    SET total_grupos = total_grupos - 1
+    WHERE id_carga IN (SELECT id_carga FROM deleted);
+END;
+GO
+ 
+-- =============================================================
+--  VISTAS
+-- =============================================================
+ 
+-- Grupos disponibles con toda su info (CU1 paso 2)
+CREATE VIEW vista_grupos_disponibles AS
+SELECT
+    g.id_grupo,
+    g.clave                 AS grupo_clave,
+    m.nombre                AS materia,
+    m.creditos,
+    d.nombre                AS docente,
+    a.numero                AS aula_numero,
+    a.edificio,
+    h.dias,
+    h.hora_inicio,
+    h.hora_fin,
+    g.cupo_disponible,
+    g.cupo_max,
+    c.nombre                AS carrera,
+    oa.periodo
+FROM grupo g
+JOIN materia m           ON g.id_materia  = m.id_materia
+JOIN docente d           ON g.id_docente  = d.id_docente
+JOIN aula a              ON g.id_aula     = a.id_aula
+JOIN horario h           ON g.id_horario  = h.id_horario
+JOIN oferta_academica oa ON g.id_oferta   = oa.id_oferta
+JOIN carrera c           ON oa.id_carrera = c.id_carrera
+WHERE g.estado = 'disponible'
+  AND oa.estado = 'publicada';
+GO
+ 
+-- Carga completa de un alumno (CU1 paso 5 / consultar info escolar)
+CREATE VIEW vista_carga_alumno AS
+SELECT
+    al.matricula,
+    al.nombre               AS alumno,
+    ca.periodo,
+    ca.estado               AS estado_carga,
+    ca.total_grupos,
+    m.nombre                AS materia,
+    g.clave                 AS grupo,
+    d.nombre                AS docente,
+    h.dias,
+    h.hora_inicio,
+    h.hora_fin,
+    a.numero                AS aula,
+    a.edificio
+FROM carga_academica ca
+JOIN alumno al           ON ca.id_alumno  = al.id_alumno
+JOIN linea_carga lc      ON lc.id_carga   = ca.id_carga
+JOIN grupo g             ON lc.id_grupo   = g.id_grupo
+JOIN materia m           ON g.id_materia  = m.id_materia
+JOIN docente d           ON g.id_docente  = d.id_docente
+JOIN horario h           ON g.id_horario  = h.id_horario
+JOIN aula a              ON g.id_aula     = a.id_aula;
+GO
+
+ALTER TABLE alumno
+ADD password VARCHAR(255) NOT NULL DEFAULT 'utm2025';
+GO
+
+-- Carrera
+INSERT INTO carrera (clave, nombre)
+VALUES ('ISC', 'Ingeniería en Sistemas Computacionales');
+
+-- Alumno con password
+INSERT INTO alumno (matricula, nombre, semestre, tipo, estado_pago, id_carrera, password)
+VALUES ('2021001234', 'Juan Pérez García', 3, 'regular', 'vigente', 1, 'utm2025');
