@@ -7,6 +7,7 @@ const form       = document.getElementById('loginForm');
 const btnLogin   = document.getElementById('btnLogin');
 const btnText    = document.getElementById('btnText');
 const btnLoader  = document.getElementById('btnLoader');
+const API_URL = 'http://localhost:3000';
 
 // --- Helpers UI ---
 
@@ -62,11 +63,15 @@ form.addEventListener('submit', async (e) => {
   setLoading(true);
 
   try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matricula, password })
-    });
+const res = await fetch(`${API_URL}/api/auth/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ matricula, password })
+});
+
+// Agrega esto temporalmente:
+const texto = await res.text();
+console.log('Respuesta del servidor:', texto);
 
     const data = await res.json();
 
@@ -96,8 +101,9 @@ form.addEventListener('submit', async (e) => {
     }
 
   } catch (err) {
-    showGlobalError('No se pudo conectar con el servidor. Intenta más tarde.');
-  } finally {
+  console.log('Error completo:', err);  // agrega esta línea
+  showGlobalError('No se pudo conectar con el servidor. Intenta más tarde.');
+} finally {
     setLoading(false);
   }
 });
