@@ -1,0 +1,242 @@
+/* =====================================================
+   VARIABLES – Colores institucionales UTM
+   ===================================================== */
+:root {
+  --azul-oscuro:   #1a3a6b;
+  --azul-medio:    #1e4d8c;
+  --azul-claro:    #2e7bbf;
+  --azul-acento:   #3a9bd5;
+  --blanco:        #ffffff;
+  --gris-fondo:    #3a3a3a;
+  --gris-borde:    #d0d5dd;
+  --gris-texto:    #555;
+  --rojo-error:    #c0392b;
+  --radio:         6px;
+  --sombra:        0 4px 20px rgba(0,0,0,0.18);
+}
+
+/* =====================================================
+   RESET BÁSICO
+   ===================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--gris-fondo);
+  color: #222;
+  min-height: 100vh;
+}
+
+/* =====================================================
+   PAGE WRAPPER
+   ===================================================== */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  margin: 0 auto;
+  background-color: #f0f0f0;
+}
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+.header {
+  background-color: var(--azul-oscuro);
+  border-bottom: 4px solid var(--azul-claro);
+  padding: 18px 24px;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--blanco);
+  letter-spacing: 2px;
+  background: var(--azul-claro);
+  padding: 4px 12px;
+  border-radius: var(--radio);
+}
+
+.header-title {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.85);
+  font-weight: 400;
+}
+
+/* =====================================================
+   MAIN / CARD
+   ===================================================== */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  background-color: var(--blanco);
+}
+
+.card {
+  width: 100%;
+  max-width: 500px;
+}
+
+.card-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #222;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+/* =====================================================
+   FORMULARIO
+   ===================================================== */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--gris-texto);
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio);
+  font-size: 0.95rem;
+  color: #333;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: var(--azul-claro);
+  box-shadow: 0 0 0 3px rgba(46,123,191,0.15);
+}
+
+.form-group input.input-error {
+  border-color: var(--rojo-error);
+}
+
+/* Mensajes de error por campo */
+.field-error {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--rojo-error);
+  margin-top: 4px;
+  min-height: 18px;
+}
+
+/* Error global (respuesta del servidor) */
+.form-error {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--rojo-error);
+  text-align: center;
+  margin-bottom: 12px;
+  min-height: 20px;
+  font-weight: 500;
+}
+
+/* =====================================================
+   BOTÓN
+   ===================================================== */
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--azul-oscuro);
+  color: var(--blanco);
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radio);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background-color: var(--azul-medio);
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Loader spinner */
+.loader {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: var(--blanco);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.hidden {
+  display: none;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+.footer {
+  background-color: var(--blanco);
+  border-top: 1px solid var(--gris-borde);
+  text-align: center;
+  padding: 16px;
+  font-size: 0.82rem;
+  color: #888;
+}
+
+.footer strong {
+  color: var(--azul-oscuro);
+}
+
+/* =====================================================
+   BARRA DECORATIVA INFERIOR
+   ===================================================== */
+.footer-bar {
+  height: 10px;
+  background: linear-gradient(90deg, var(--azul-oscuro), var(--azul-claro), var(--azul-acento));
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+@media (max-width: 100%) {
+  .header-title {
+    display: none;
+  }
+  .card-title {
+    font-size: 1.3rem;
+  }
+}

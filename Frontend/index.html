@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – Sistema de Carga Académica UTM</title>
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-inner">
+        <span class="header-logo">UTM</span>
+        <span class="header-title">Sistema de Carga Académica</span>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="card">
+        <h1 class="card-title">Inicio de Sesión</h1>
+
+        <form id="loginForm" novalidate>
+
+          <div class="form-group">
+            <label for="matricula">Matrícula</label>
+            <input
+              type="text"
+              id="matricula"
+              name="matricula"
+              placeholder="Ej. 2021001234"
+              autocomplete="username"
+              required
+            />
+            <span class="field-error" id="err-matricula"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Contraseña"
+              autocomplete="current-password"
+              required
+            />
+            <span class="field-error" id="err-password"></span>
+          </div>
+
+          <span class="form-error" id="err-global"></span>
+
+          <button type="submit" class="btn-submit" id="btnLogin">
+            <span id="btnText">Entrar</span>
+            <span id="btnLoader" class="loader hidden"></span>
+          </button>
+
+        </form>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>© Copyright 2025 <strong>UTM</strong> – Todos los Derechos Reservados</p>
+    </footer>
+
+    <!-- BARRA DECORATIVA -->
+    <div class="footer-bar"></div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
