@@ -231,7 +231,7 @@ function renderGrupos() {
   const cont = document.getElementById('grupos-list');
   cont.innerHTML = grupos.map(g => {
     const [bklass, blabel] = ESTADO_BADGE[g.estado] || ['badge--gray','—'];
-    return `<div class="list-item list-item--clickable" data-action="editar" data-id="${g.id}">
+    return `<div class="list-item" data-id="${g.id}">
       <span class="clave">${escapeHtml(g.clave)}</span>
       <div class="list-item__body">
         <div class="list-item__title">${escapeHtml(g.materia)}</div>
@@ -245,14 +245,38 @@ function renderGrupos() {
         <span class="badge ${bklass}">${escapeHtml(blabel)}</span>
         <span style="font-size:12px;color:var(--muted);font-weight:600;">${g.cupoOcup} / ${g.cupoMax}</span>
       </div>
+      <div style="display:flex;gap:6px;margin-left:8px;">
+        <button class="btn btn--ghost btn-editar" data-id="${g.id}"
+          style="padding:8px 12px;" title="Editar grupo">
+          ${icon('edit',15,2)}
+        </button>
+        <button class="btn btn--danger btn-borrar" data-id="${g.id}" data-clave="${escapeHtml(g.clave)}"
+          style="padding:8px 12px;" title="Eliminar grupo">
+          ${icon('x',15,2)}
+        </button>
+      </div>
     </div>`;
   }).join('');
 
-  // Event delegation — reemplaza onclick inline en cada card
+  // Event delegation
   cont.addEventListener('click', (e) => {
-    const el = e.target.closest('[data-action="editar"]');
-    if (el) editarGrupo(Number(el.dataset.id));
+    const btnEditar = e.target.closest('.btn-editar');
+    const btnBorrar = e.target.closest('.btn-borrar');
+    if (btnEditar) editarGrupo(Number(btnEditar.dataset.id));
+    if (btnBorrar) confirmarBorrado(Number(btnBorrar.dataset.id), btnBorrar.dataset.clave);
   });
+}
+
+function confirmarBorrado(id, clave) {
+  if (!confirm(`¿Eliminar el grupo ${clave}? Esta acción no se puede deshacer.`)) return;
+  borrarGrupo(id, clave);
+}
+
+function borrarGrupo(id, clave) {
+  // TODO: DELETE /api/coordinador/grupos/:id
+  grupos = grupos.filter(g => g.id !== id);
+  renderGrupos();
+  showToast('Grupo eliminado', `El grupo ${escapeHtml(clave)} fue eliminado.`, 'ok');
 }
 
 // ===================================================
