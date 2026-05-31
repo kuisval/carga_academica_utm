@@ -12,7 +12,7 @@ const server = http.createServer(async (req, res) => {
 
   // CORS – permite peticiones desde el frontend
   res.setHeader('Access-Control-Allow-Origin',  '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // Pre-flight OPTIONS
@@ -21,8 +21,8 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
-  // Parsear body JSON en POST
-  if (req.method === 'POST') {
+  // Parsear body JSON en POST y DELETE
+  if (req.method === 'POST' || req.method === 'DELETE') {
     let body = '';
     req.on('data', chunk => { body += chunk.toString(); });
     req.on('end',  () => {
