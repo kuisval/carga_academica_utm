@@ -3,17 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UTM — Coordinación Académica</title>
+  <title>UTM — Gestión de Grupos</title>
   <link rel="stylesheet" href="../../css/estilos.css" />
   <style>
-    .grupos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .two-col       { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
+    .section-subtitle { font-family: var(--logo); font-weight: 700; font-size: 18px; color: var(--ink); margin-bottom: 14px; }
+    .loading-state { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 15px; padding: 40px 0; }
+    .empty-state   { padding: 48px 0; text-align: center; color: var(--muted); font-size: 15px; }
+    .empty-state svg { display: block; margin: 0 auto 12px; opacity: .4; }
+
+    /* Formulario */
+    .form-card     { position: sticky; top: 24px; }
+    .form-card select.field__input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2390838A' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+    .form-section-title { font-size: 11px; font-weight: 800; color: var(--tinto-700); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 12px; margin-top: 20px; }
+    .form-section-title:first-child { margin-top: 0; }
+
+    /* Tabla de grupos */
+    .grupos-tabla  { width: 100%; border-collapse: collapse; }
+    .grupos-tabla thead tr { background: var(--tinto-900); color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .grupos-tabla th, .grupos-tabla td { padding: 11px 14px; text-align: left; }
+    .grupos-tabla tbody tr { border-bottom: 1px solid var(--line); font-size: 14px; }
+    .grupos-tabla tbody tr:last-child { border-bottom: none; }
+    .grupos-tabla tbody tr:hover { background: var(--tinto-50); }
+
+    /* Stats resumen */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stats-row .card { padding: 18px 20px; }
+    .stats-row .stat-val { font-family: var(--logo); font-weight: 700; font-size: 30px; color: var(--tinto-700); line-height: 1; }
+    .stats-row .stat-lbl { font-size: 13px; color: var(--muted); margin-top: 5px; font-weight: 600; }
   </style>
 </head>
 <body>
 
 <div class="app-shell">
 
-  <!-- ═══ Header ═══ -->
+  <!-- ── Header ─────────────────────────────────────── -->
   <header class="app-header">
     <img src="../../assets/utm-icon-white.png" class="header-logo-img" alt="UTM" />
     <div class="header-brand">
@@ -23,7 +47,7 @@
     <div class="header-spacer"></div>
     <div class="header-period">
       <span id="header-period-icon"></span>
-      <span id="header-period-text">Enero – Junio 2026</span>
+      <span id="header-period-text">—</span>
     </div>
     <button class="header-bell" title="Notificaciones">
       <span id="ico-bell"></span>
@@ -32,17 +56,16 @@
     <div class="header-divider"></div>
     <div class="header-user">
       <div class="header-user__name" id="header-user-name">—</div>
-      <div class="header-user__role" id="header-user-role">Coordinación</div>
+      <div class="header-user__role" id="header-user-role">Coordinador</div>
     </div>
     <button class="header-logout" id="btnLogout">
       <span id="ico-logout"></span> Cerrar sesión
     </button>
   </header>
 
-  <!-- ═══ Contenido ═══ -->
   <div class="content-area">
 
-    <!-- Sidebar -->
+    <!-- ── Sidebar ──────────────────────────────────── -->
     <aside class="sidebar">
       <div class="sidebar__label">Menú</div>
       <nav class="sidebar__nav">
@@ -51,7 +74,7 @@
           <span>Gestión de grupos</span>
         </button>
         <button class="nav-btn" data-section="sec-oferta">
-          <span class="nav-icon" id="ico-nav-grid"></span>
+          <span class="nav-icon" id="ico-nav-doc"></span>
           <span>Oferta académica</span>
         </button>
       </nav>
@@ -59,392 +82,194 @@
       <div class="sidebar__period-card">
         <img src="../../assets/utm-icon.png" class="sidebar__period-bg" aria-hidden="true" />
         <div class="sidebar__period-label">Periodo activo</div>
-        <div class="sidebar__period-name" id="sidebar-period-name">Enero – Junio 2026</div>
-        <div class="sidebar__period-status">Inscripciones abiertas</div>
+        <div class="sidebar__period-name" id="sidebar-period-name">—</div>
+        <div class="sidebar__period-status" id="sidebar-oferta-status">Borrador</div>
       </div>
       <div class="greca greca-small"></div>
     </aside>
 
-    <!-- Main -->
+    <!-- ── Main ─────────────────────────────────────── -->
     <main class="main-content">
       <img src="../../assets/utm-icon.png" class="main-content__bg" aria-hidden="true" />
       <div class="main-inner">
 
-        <!-- ── SECCIÓN: Gestión de grupos ── -->
+        <!-- ═══ SECCIÓN: Gestión de grupos ════════════ -->
         <section id="sec-grupos" class="section active">
           <div class="page-header">
             <div class="page-header__left">
               <h1 class="page-header__title">Gestión de grupos</h1>
-              <p class="page-header__sub" id="grupos-subtitulo">— grupos · Enero – Junio 2026</p>
+              <p class="page-header__sub" id="grupos-subtitulo">—</p>
             </div>
-            <div id="header-nuevo-btn">
-              <button class="btn btn--primary" id="btn-nuevo-grupo">
-                <span id="ico-plus"></span> Nuevo grupo
+            <span class="badge badge--warn badge--lg" id="oferta-estado-badge">Borrador</span>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-row" id="stats-row">
+            <div class="card"><div class="stat-val" id="stat-grupos">—</div><div class="stat-lbl">Grupos creados</div></div>
+            <div class="card"><div class="stat-val" id="stat-materias">—</div><div class="stat-lbl">Materias con grupo</div></div>
+            <div class="card"><div class="stat-val" id="stat-lugares">—</div><div class="stat-lbl">Lugares totales</div></div>
+            <div class="card"><div class="stat-val" id="stat-docentes">—</div><div class="stat-lbl">Docentes asignados</div></div>
+          </div>
+
+          <div class="two-col">
+
+            <!-- Lista de grupos -->
+            <div>
+              <div class="section-subtitle">Grupos registrados</div>
+              <div id="grupos-loading" class="loading-state">
+                <span class="loader loader--tinto"></span> Cargando grupos...
+              </div>
+              <div id="grupos-content" style="display:none;">
+                <div class="card" style="padding:0;overflow:hidden;">
+                  <table class="grupos-tabla">
+                    <thead>
+                      <tr>
+                        <th>Clave</th>
+                        <th>Materia</th>
+                        <th>Docente</th>
+                        <th>Horario</th>
+                        <th>Aula</th>
+                        <th style="text-align:center;">Cupo</th>
+                        <th style="text-align:center;">Estado</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="grupos-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div id="grupos-empty" style="display:none;" class="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path d="M16 19a4 4 0 0 0-8 0M12 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M20.5 18.2a3.3 3.3 0 0 0-3-2.2M18.2 10.6a2.6 2.6 0 0 0 0-4.2"/>
+                </svg>
+                Aún no has creado grupos.<br>Usa el formulario para agregar el primero.
+              </div>
+            </div>
+
+            <!-- Formulario nuevo grupo -->
+            <div class="card form-card" id="form-wrap">
+              <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:18px;">
+                Nuevo grupo
+              </div>
+
+              <div class="form-section-title">Materia</div>
+              <div class="form-grid">
+                <div class="field form-grid--span">
+                  <label class="field__label">Materia *</label>
+                  <select class="field__input" id="f-materia">
+                    <option value="">Selecciona una materia</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label">Clave del grupo *</label>
+                  <input class="field__input" id="f-clave" type="text" placeholder="Ej. BD-A" maxlength="20" />
+                </div>
+                <div class="field">
+                  <label class="field__label">Cupo máximo *</label>
+                  <input class="field__input" id="f-cupo" type="number" placeholder="25" min="1" max="100" />
+                </div>
+              </div>
+
+              <div class="form-section-title">Asignación</div>
+              <div class="form-grid">
+                <div class="field form-grid--span">
+                  <label class="field__label">Docente *</label>
+                  <select class="field__input" id="f-docente">
+                    <option value="">Selecciona un docente</option>
+                  </select>
+                </div>
+                <div class="field form-grid--span">
+                  <label class="field__label">Aula *</label>
+                  <select class="field__input" id="f-aula">
+                    <option value="">Selecciona un aula</option>
+                  </select>
+                </div>
+                <div class="field form-grid--span">
+                  <label class="field__label">Horario *</label>
+                  <select class="field__input" id="f-horario">
+                    <option value="">Selecciona un horario</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="form-error" class="inline-error" style="display:none;"></div>
+
+              <button class="btn btn--primary btn--full mt-16" id="btn-crear" style="padding:14px;">
+                <span id="ico-btn-plus"></span> Crear grupo
               </button>
             </div>
-          </div>
 
-          <!-- Formulario (oculto por defecto) -->
-          <div id="form-container" class="hidden">
-            <div class="card mb-22" style="background:var(--tinto-50); max-width:760px;">
-              <div style="font-family:var(--logo);font-weight:700;font-size:20px;color:var(--ink);margin-bottom:20px;" id="form-titulo">Nuevo grupo</div>
-              <div class="form-grid">
-                <div class="form-grid--span">
-                  <label class="field">
-                    <span class="field__label">Materia</span>
-                    <select class="field__input" id="form-materia">
-                      <option value="">Selecciona una materia…</option>
-                    </select>
-                  </label>
-                </div>
-                <label class="field">
-                  <span class="field__label">Docente</span>
-                  <select class="field__input" id="form-docente">
-                    <option value="">Selecciona un docente…</option>
-                  </select>
-                </label>
-                <label class="field">
-                  <span class="field__label">Clave del grupo</span>
-                  <input class="field__input" id="form-clave" placeholder="Ej. ISC-6A" />
-                </label>
-                <label class="field">
-                  <span class="field__label">Cupo máximo</span>
-                  <input class="field__input" id="form-cupo" type="number" min="1" max="60" placeholder="35" />
-                </label>
-                <label class="field">
-                  <span class="field__label">Aula</span>
-                  <input class="field__input" id="form-aula" placeholder="Ej. L-204" />
-                </label>
-                <label class="field">
-                  <span class="field__label">Horario (días)</span>
-                  <input class="field__input" id="form-horario" placeholder="Ej. Lun y Mié · 07:00–09:00" />
-                </label>
-              </div>
-              <div class="form-actions">
-                <button class="btn btn--ghost" id="btn-cancelar-form">Cancelar</button>
-                <button class="btn btn--primary" id="btn-guardar-grupo">
-                  <span id="ico-check-form"></span> Guardar grupo
-                </button>
-              </div>
-            </div>
           </div>
-
-          <!-- Lista de grupos -->
-          <div class="grupos-grid" id="grupos-list"></div>
         </section>
 
-        <!-- ── SECCIÓN: Oferta académica ── -->
+        <!-- ═══ SECCIÓN: Oferta académica ══════════════ -->
         <section id="sec-oferta" class="section">
           <div class="page-header">
             <div class="page-header__left">
               <h1 class="page-header__title">Oferta académica</h1>
-              <p class="page-header__sub" id="oferta-subtitulo">Ingeniería en Sistemas Computacionales · Enero – Junio 2026</p>
+              <p class="page-header__sub" id="oferta-subtitulo">—</p>
             </div>
-            <button class="btn btn--default" id="btn-exportar">
-              <span id="ico-download-oferta"></span> Exportar
-            </button>
           </div>
 
-          <!-- Stats -->
-          <div class="stats-grid" id="oferta-stats"></div>
-
-          <!-- Filtros -->
-          <div class="chips" id="oferta-chips">
-            <button class="chip active" data-filtro="Todas">Todas</button>
-            <button class="chip" data-filtro="Obligatoria">Obligatorias</button>
-            <button class="chip" data-filtro="Optativa">Optativas</button>
+          <div id="oferta-loading" class="loading-state">
+            <span class="loader loader--tinto"></span> Cargando oferta...
           </div>
 
-          <!-- Tabla -->
-          <div class="card oferta-table" style="padding:0;">
-            <div class="oferta-table__head">
-              <span>Materia</span><span>Grupo</span><span>Docente</span><span>Horario</span><span>Cupo</span>
+          <div id="oferta-content" style="display:none;">
+
+            <!-- Card estado de oferta -->
+            <div class="card" style="margin-bottom:24px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                <div>
+                  <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Estado de la oferta</div>
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <span class="badge badge--lg" id="oferta-badge-estado">—</span>
+                    <span style="font-size:14px;color:var(--muted);" id="oferta-periodo-txt">—</span>
+                  </div>
+                  <div style="font-size:13px;color:var(--muted);margin-top:8px;" id="oferta-info-txt">—</div>
+                </div>
+                <button class="btn btn--primary btn--lg" id="btn-publicar" style="gap:8px;">
+                  <span id="ico-btn-publicar"></span> Publicar oferta
+                </button>
+              </div>
             </div>
-            <div id="oferta-rows"></div>
+
+            <!-- Tabla resumen de grupos -->
+            <div class="section-subtitle">Grupos en esta oferta</div>
+            <div class="card oferta-table" style="padding:0;overflow:hidden;" id="oferta-tabla-wrap">
+              <div class="oferta-table__head">
+                <span>Clave</span>
+                <span>Materia</span>
+                <span>Docente</span>
+                <span>Horario</span>
+                <span>Aula</span>
+                <span>Cupo</span>
+                <span>Estado</span>
+              </div>
+              <div id="oferta-rows"></div>
+            </div>
+
           </div>
+
+          <!-- Sin oferta -->
+          <div id="oferta-empty" style="display:none;" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h4"/>
+            </svg>
+            Aún no existe una oferta para este periodo.<br>
+            <a href="#" id="link-ir-grupos" style="color:var(--tinto-700);font-weight:700;margin-top:8px;display:inline-block;">
+              Ir a crear grupos →
+            </a>
+          </div>
+
         </section>
 
-      </div><!-- /main-inner -->
+      </div>
     </main>
-
-  </div><!-- /content-area -->
-</div><!-- /app-shell -->
+  </div>
+</div>
 
 <script src="../../js/app.js"></script>
-<script>
-// ===================================================
-//  DATOS MOCK — se reemplazarán con llamadas al API
-// ===================================================
-const PERIODO = 'Enero – Junio 2026';
-
-const MATERIAS_OPC = [
-  'Bases de Datos Avanzadas','Ingeniería de Software','Redes de Computadoras',
-  'Programación Web','Robótica Industrial','Estadística Aplicada','Cómputo en la Nube',
-];
-const DOCENTES_OPC = [
-  'Dr. Tomás Aguilar','Dra. Mariana Sandoval','Mtro. Rodrigo Peña',
-  'Ing. Sofía Maldonado','Ing. Lucía Hernández','Dr. Andrés Villalobos','Sin asignar',
-];
-
-// Lista de grupos (vendrá del API: GET /api/coordinador/grupos)
-let grupos = [
-  { id:1, clave:'ISC-6A', materia:'Bases de Datos Avanzadas', docente:'Dr. Tomás Aguilar',     cupoOcup:32, cupoMax:35, aula:'L-204', horario:'Lun y Mié · 07:00–09:00', estado:'abierto',  tipo:'Obligatoria' },
-  { id:2, clave:'ISC-6B', materia:'Ingeniería de Software',   docente:'Dra. Mariana Sandoval', cupoOcup:30, cupoMax:35, aula:'L-206', horario:'Mar y Jue · 09:00–11:00', estado:'abierto',  tipo:'Obligatoria' },
-  { id:3, clave:'ISC-4A', materia:'Programación Web',         docente:'Mtro. Rodrigo Peña',    cupoOcup:35, cupoMax:35, aula:'L-208', horario:'Vie · 07:00–11:00',        estado:'lleno',    tipo:'Obligatoria' },
-  { id:4, clave:'IIN-3A', materia:'Estadística Aplicada',     docente:'Dr. Andrés Villalobos', cupoOcup:28, cupoMax:35, aula:'A-118', horario:'Mar y Jue · 13:00–15:00', estado:'abierto',  tipo:'Obligatoria' },
-  { id:5, clave:'MEC-4A', materia:'Robótica Industrial',      docente:'Sin asignar',           cupoOcup:0,  cupoMax:30, aula:'—',     horario:'—',                       estado:'borrador', tipo:'Optativa' },
-];
-
-// Oferta para la tabla (vendrá del API)
-const OFERTA_TABLA = [
-  { clave:'SIS-601', nombre:'Bases de Datos Avanzadas', creditos:7, tipo:'Obligatoria',
-    grupos:[{ g:'A', docente:'Dr. Tomás Aguilar',      horario:'Lun y Mié · 07:00–09:00', ocupado:32, cupo:35 },
-            { g:'B', docente:'Dra. Mariana Sandoval',  horario:'Mar y Jue · 09:00–11:00', ocupado:30, cupo:35 }]},
-  { clave:'SIS-603', nombre:'Ingeniería de Software',   creditos:8, tipo:'Obligatoria',
-    grupos:[{ g:'A', docente:'Dra. Mariana Sandoval',  horario:'Mar y Jue · 09:00–11:00', ocupado:28, cupo:35 }]},
-  { clave:'SIS-605', nombre:'Redes de Computadoras',    creditos:7, tipo:'Obligatoria',
-    grupos:[{ g:'A', docente:'Ing. Sofía Maldonado',   horario:'Lun y Mié · 11:00–13:00', ocupado:20, cupo:35 }]},
-  { clave:'SIS-607', nombre:'Programación Web',         creditos:8, tipo:'Obligatoria',
-    grupos:[{ g:'A', docente:'Mtro. Rodrigo Peña',     horario:'Vie · 07:00–11:00',        ocupado:35, cupo:35 }]},
-  { clave:'BAS-602', nombre:'Estadística Aplicada',     creditos:6, tipo:'Obligatoria',
-    grupos:[{ g:'A', docente:'Dr. Andrés Villalobos',  horario:'Mar y Jue · 13:00–15:00', ocupado:18, cupo:35 }]},
-  { clave:'SIS-651', nombre:'Cómputo en la Nube',       creditos:6, tipo:'Optativa',
-    grupos:[{ g:'A', docente:'Dr. Tomás Aguilar',      horario:'Lun y Mié · 13:00–15:00', ocupado:12, cupo:30 }]},
-  { clave:'SIS-653', nombre:'Desarrollo de Videojuegos',creditos:6, tipo:'Optativa',
-    grupos:[{ g:'A', docente:'Ing. Sofía Maldonado',   horario:'Vie · 11:00–15:00',        ocupado:22, cupo:30 }]},
-];
-
-let filtroActivo = 'Todas';
-let editandoId   = null;
-
-// ===================================================
-//  RENDER — Lista de grupos
-// ===================================================
-const ESTADO_BADGE = {
-  abierto:  ['badge--ok',   'Abierto'],
-  lleno:    ['badge--warn', 'Lleno'],
-  borrador: ['badge--gray', 'Borrador'],
-};
-
-function renderGrupos() {
-  document.getElementById('grupos-subtitulo').textContent = `${grupos.length} grupos · ${PERIODO}`;
-  const cont = document.getElementById('grupos-list');
-  cont.innerHTML = grupos.map(g => {
-    const [bklass, blabel] = ESTADO_BADGE[g.estado] || ['badge--gray','—'];
-    return `<div class="list-item" data-id="${g.id}">
-      <span class="clave">${escapeHtml(g.clave)}</span>
-      <div class="list-item__body">
-        <div class="list-item__title">${escapeHtml(g.materia)}</div>
-        <div class="list-item__meta">
-          <span class="list-item__meta-item">${icon('user',13)} ${escapeHtml(g.docente)}</span>
-          <span class="list-item__meta-item">${icon('pin',13)} ${escapeHtml(g.aula)}</span>
-          <span class="list-item__meta-item">${icon('clock',13)} ${escapeHtml(g.horario)}</span>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        <span class="badge ${bklass}">${escapeHtml(blabel)}</span>
-        <span style="font-size:12px;color:var(--muted);font-weight:600;">${g.cupoOcup} / ${g.cupoMax}</span>
-      </div>
-      <div style="display:flex;gap:6px;margin-left:8px;">
-        <button class="btn btn--ghost btn-editar" data-id="${g.id}"
-          style="padding:8px 12px;" title="Editar grupo">
-          ${icon('edit',15,2)}
-        </button>
-        <button class="btn btn--danger btn-borrar" data-id="${g.id}" data-clave="${escapeHtml(g.clave)}"
-          style="padding:8px 12px;" title="Eliminar grupo">
-          ${icon('x',15,2)}
-        </button>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Event delegation
-  cont.addEventListener('click', (e) => {
-    const btnEditar = e.target.closest('.btn-editar');
-    const btnBorrar = e.target.closest('.btn-borrar');
-    if (btnEditar) editarGrupo(Number(btnEditar.dataset.id));
-    if (btnBorrar) confirmarBorrado(Number(btnBorrar.dataset.id), btnBorrar.dataset.clave);
-  });
-}
-
-function confirmarBorrado(id, clave) {
-  if (!confirm(`¿Eliminar el grupo ${clave}? Esta acción no se puede deshacer.`)) return;
-  borrarGrupo(id, clave);
-}
-
-function borrarGrupo(id, clave) {
-  // TODO: DELETE /api/coordinador/grupos/:id
-  grupos = grupos.filter(g => g.id !== id);
-  renderGrupos();
-  showToast('Grupo eliminado', `El grupo ${escapeHtml(clave)} fue eliminado.`, 'ok');
-}
-
-// ===================================================
-//  RENDER — Oferta académica
-// ===================================================
-function renderOferta() {
-  const lista = filtroActivo === 'Todas'
-    ? OFERTA_TABLA
-    : OFERTA_TABLA.filter(m => m.tipo === filtroActivo);
-
-  const totalGrupos = OFERTA_TABLA.reduce((s, m) => s + m.grupos.length, 0);
-  const totalCupo   = OFERTA_TABLA.reduce((s, m) => s + m.grupos.reduce((a, g) => a + g.cupo, 0), 0);
-  const totalOcup   = OFERTA_TABLA.reduce((s, m) => s + m.grupos.reduce((a, g) => a + g.ocupado, 0), 0);
-
-  document.getElementById('oferta-stats').innerHTML = [
-    ['grid',  OFERTA_TABLA.length,             'Materias en oferta'],
-    ['users', totalGrupos,                      'Grupos abiertos'],
-    ['seats', `${totalOcup}/${totalCupo}`,     'Lugares ocupados'],
-  ].map(([ico, val, lbl]) => `
-    <div class="card stat-card">
-      <div class="stat-card__icon">${icon(ico, 24)}</div>
-      <div>
-        <div class="stat-card__value">${val}</div>
-        <div class="stat-card__label">${lbl}</div>
-      </div>
-    </div>`).join('');
-
-  document.getElementById('oferta-rows').innerHTML = lista.map(m =>
-    m.grupos.map((gr, gi) => {
-      const lleno = gr.ocupado >= gr.cupo;
-      return `<div class="oferta-table__row">
-        <div style="display:flex;align-items:center;gap:12px;">
-          ${gi === 0 ? `<span class="clave">${escapeHtml(m.clave)}</span>` : `<span style="width:64px;"></span>`}
-          <div>
-            ${gi === 0 ? `<div style="font-weight:700;font-size:15px;">${escapeHtml(m.nombre)}</div><div style="font-size:12.5px;color:var(--muted);font-weight:500;">${m.creditos} créd · ${escapeHtml(m.tipo)}</div>` : ''}
-          </div>
-        </div>
-        <span style="font-weight:700;font-size:14px;color:var(--ink-2);">Grupo ${escapeHtml(gr.g)}</span>
-        <span style="font-size:14px;color:var(--ink-2);">${escapeHtml(gr.docente)}</span>
-        <span style="font-size:13.5px;color:var(--ink-2);">${escapeHtml(gr.horario)}</span>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:14px;font-weight:700;color:${lleno ? 'var(--red)' : 'var(--ink)'};">${gr.ocupado}/${gr.cupo}</span>
-          ${lleno ? `<span class="badge badge--warn">Lleno</span>` : ''}
-        </div>
-      </div>`;
-    }).join('')
-  ).join('');
-}
-
-// ===================================================
-//  FORMULARIO
-// ===================================================
-function abrirForm(grupo = null) {
-  editandoId = grupo ? grupo.id : null;
-  document.getElementById('form-titulo').textContent = grupo ? `Editar grupo ${grupo.clave}` : 'Nuevo grupo';
-  document.getElementById('form-clave').value   = grupo ? grupo.clave   : '';
-  document.getElementById('form-materia').value = grupo ? grupo.materia : '';
-  document.getElementById('form-docente').value = grupo ? grupo.docente : '';
-  document.getElementById('form-cupo').value    = grupo ? grupo.cupoMax : '';
-  document.getElementById('form-aula').value    = grupo ? grupo.aula    : '';
-  document.getElementById('form-horario').value = grupo ? grupo.horario : '';
-
-  document.getElementById('form-container').classList.remove('hidden');
-  document.getElementById('header-nuevo-btn').classList.add('hidden');
-}
-
-function cerrarForm() {
-  document.getElementById('form-container').classList.add('hidden');
-  document.getElementById('header-nuevo-btn').classList.remove('hidden');
-  editandoId = null;
-}
-
-function guardarGrupo() {
-  const clave   = document.getElementById('form-clave').value.trim()   || 'NUEVO';
-  const materia = document.getElementById('form-materia').value;
-  const docente = document.getElementById('form-docente').value;
-  const cupo    = parseInt(document.getElementById('form-cupo').value) || 35;
-  const aula    = document.getElementById('form-aula').value.trim()    || '—';
-  const horario = document.getElementById('form-horario').value.trim() || '—';
-
-  if (!materia || !docente) {
-    showToast('Campos requeridos', 'Selecciona una materia y un docente.', 'bad');
-    return;
-  }
-
-  if (editandoId !== null) {
-    // TODO: PUT /api/coordinador/grupos/:id
-    grupos = grupos.map(g => g.id === editandoId
-      ? { ...g, clave, materia, docente, cupoMax:cupo, aula, horario }
-      : g
-    );
-    showToast('Actividad completada', `El grupo ${clave} fue actualizado.`, 'ok');
-  } else {
-    // TODO: POST /api/coordinador/grupos
-    const id = Math.max(...grupos.map(g => g.id)) + 1;
-    grupos.push({ id, clave, materia, docente, cupoOcup:0, cupoMax:cupo, aula, horario, estado:'borrador', tipo:'Obligatoria' });
-    showToast('Actividad completada', `El grupo ${clave} fue creado.`, 'ok');
-  }
-
-  cerrarForm();
-  renderGrupos();
-}
-
-function editarGrupo(id) {
-  const g = grupos.find(x => x.id === id);
-  if (g) abrirForm(g);
-}
-
-// ===================================================
-//  INICIALIZACIÓN
-// ===================================================
-document.addEventListener('DOMContentLoaded', () => {
-  const usuario = requireAuth('../../index.html');
-  if (!usuario) return;
-
-  fillShell(usuario, PERIODO);
-  document.getElementById('header-user-role').textContent = 'Coordinación Académica';
-
-  // Íconos
-  document.getElementById('header-period-icon').innerHTML    = icon('clock', 17);
-  document.getElementById('ico-bell').innerHTML              = icon('bell', 20);
-  document.getElementById('ico-logout').innerHTML            = icon('logout', 16, 2);
-  document.getElementById('ico-nav-users').innerHTML         = icon('users', 21);
-  document.getElementById('ico-nav-grid').innerHTML          = icon('grid', 21);
-  document.getElementById('ico-plus').innerHTML              = icon('plus', 16, 2);
-  document.getElementById('ico-check-form').innerHTML        = icon('check', 16, 2);
-  document.getElementById('ico-download-oferta').innerHTML   = icon('download', 16, 2);
-
-  // Llenar selects
-  const selMat = document.getElementById('form-materia');
-  MATERIAS_OPC.forEach(m => { const o = document.createElement('option'); o.textContent = m; o.value = m; selMat.appendChild(o); });
-  const selDoc = document.getElementById('form-docente');
-  DOCENTES_OPC.forEach(d => { const o = document.createElement('option'); o.textContent = d; o.value = d; selDoc.appendChild(o); });
-
-  // Render inicial
-  renderGrupos();
-  renderOferta();
-
-  // Navegación
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => goSection(btn.getAttribute('data-section')));
-  });
-
-  // Acciones
-  document.getElementById('btn-nuevo-grupo').addEventListener('click', () => abrirForm(null));
-  document.getElementById('btn-cancelar-form').addEventListener('click', cerrarForm);
-  document.getElementById('btn-guardar-grupo').addEventListener('click', guardarGrupo);
-
-  document.getElementById('btn-exportar').addEventListener('click', () => {
-    showToast('Actividad completada', 'Exportando oferta académica…', 'ok');
-  });
-
-  // Chips de filtro
-  document.querySelectorAll('#oferta-chips .chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('#oferta-chips .chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      filtroActivo = chip.getAttribute('data-filtro');
-      renderOferta();
-    });
-  });
-
-  // Cerrar sesión
-  document.getElementById('btnLogout').addEventListener('click', () => {
-    sessionStorage.removeItem('usuario');
-    window.location.href = '../../index.html';
-  });
-});
-</script>
+<script src="grupos.js"></script>
 </body>
 </html>

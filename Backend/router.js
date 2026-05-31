@@ -8,9 +8,9 @@ const auth = require('./handlers/alumno/auth');
 const getGrupos      = require('./handlers/alumno/getGrupos');
 const realizarCarga  = require('./handlers/alumno/realizarCarga');
 const getInfo        = require('./handlers/alumno/getInfo');
-// const getMaterias    = require('./handlers/coordinador/getMaterias');
-// const crearGrupo     = require('./handlers/coordinador/crearGrupo');
-// const publicarOferta = require('./handlers/coordinador/publicarOferta');
+const getMaterias    = require('./handlers/coordinador/getMaterias');
+const crearGrupo     = require('./handlers/coordinador/crearGrupo');
+const publicarOferta = require('./handlers/coordinador/publicarOferta');
 // const getHorario     = require('./handlers/docente/getHorario');
 
 function handle(req, res) {
@@ -27,9 +27,9 @@ function handle(req, res) {
   if (method === 'GET'  && url.startsWith('/api/alumno/info'))    return getInfo.handle(req, res);
 
   // ── COORDINADOR ───────────────────────────────────
-  // if (method === 'GET'  && url.startsWith('/api/coordinador/materias')) return getMaterias.handle(req, res);
-  // if (method === 'POST' && url === '/api/coordinador/grupos')           return crearGrupo.handle(req, res);
-  // if (method === 'POST' && url === '/api/coordinador/oferta/publicar')  return publicarOferta.handle(req, res);
+  if (method === 'GET'  && url.startsWith('/api/coordinador/materias')) return getMaterias.handle(req, res);
+  if (method === 'POST' && url === '/api/coordinador/grupos')           return crearGrupo.handle(req, res);
+  if (method === 'POST' && url === '/api/coordinador/oferta/publicar')  return publicarOferta.handle(req, res);
 
   // ── DOCENTE ───────────────────────────────────────
   // if (method === 'GET' && url.startsWith('/api/docente/horario')) return getHorario.handle(req, res);
