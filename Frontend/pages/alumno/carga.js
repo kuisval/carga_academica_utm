@@ -34,11 +34,14 @@ async function cargarOferta() {
     document.getElementById('header-period-text').textContent  = PERIODO;
     document.getElementById('sidebar-period-name').textContent = PERIODO;
 
-    renderInfoEscolar();
+    await sincronizarInscritasDesdeDB();  // ← asegúrate que tenga await
+
+    renderInfoEscolar();   // ← estos tres van DESPUÉS del await
     renderCatalogo();
     renderCarga();
 
-  } catch {
+  } catch (err) {
+    console.error('cargarOferta:', err);
     showToast('Error de conexión', 'No se pudo conectar con el servidor.', 'bad');
   }
 }
@@ -46,6 +49,29 @@ async function cargarOferta() {
 // =====================================================
 //  UTILIDADES
 // =====================================================
+
+async function sincronizarInscritasDesdeDB() {
+  try {
+    const res  = await fetch(`${API_URL}/api/alumno/info?id_alumno=${usuario.id}`);
+    const info = await res.json();   // ← renombrado a "info" para evitar confusión
+
+    if (!res.ok || !info.grupos || info.grupos.length === 0) return;
+    if (info.periodo !== PERIODO) return;
+
+    inscritas  = {};
+    gruposEnDB = info.grupos.map(g => g.id_grupo);
+
+    for (const gr of info.grupos) {
+      const mat = oferta.find(m => m.grupos.some(g => g.id_grupo === gr.id_grupo));
+      if (mat) {
+        const grOferta = mat.grupos.find(g => g.id_grupo === gr.id_grupo);
+        if (grOferta) inscritas[mat.id_materia] = grOferta;
+      }
+    }
+  } catch (err) {
+    console.error('sincronizarInscritasDesdeDB:', err);
+  }
+}
 function fmtHora(t) {
   return String(t).slice(0, 5);
 }
@@ -87,10 +113,18 @@ function creditosInscritos() {
   }, 0);
 }
 
+const DIAS_MAP = {
+  'Lunes': 'Lun', 'Martes': 'Mar', 'Miércoles': 'Mié',
+  'Jueves': 'Jue', 'Viernes': 'Vie'
+};
+
 function inscritasToClases() {
   return Object.entries(inscritas).map(([id_mat, gr]) => {
     const mat  = oferta.find(m => m.id_materia === Number(id_mat));
-    const dias = gr.horario.dias.split(/[,\-\s]+/).map(d => d.trim()).filter(Boolean);
+    const dias = gr.horario.dias
+      .split(/[,\-\s]+/)
+      .map(d => DIAS_MAP[d.trim()] || d.trim())
+      .filter(Boolean);
     return {
       dias,
       ini:   horaANum(gr.horario.hora_inicio),
@@ -118,7 +152,7 @@ function renderInfoEscolar() {
   document.getElementById('info-estatus').innerHTML        = `${icon('check', 12, 2.5)} Activo`;
   document.getElementById('info-subtitulo').textContent    = `${alumnoInfo.carrera || '—'} · ${PERIODO}`;
 
-  renderWeekGrid(document.getElementById('weekgrid-info'), inscritasToClases());
+  renderWeekGrid(document.getElementById('weekgrid-info'),  inscritasToClases(), { h0: 7, h1: 15 });
 }
 
 // =====================================================
@@ -195,19 +229,13 @@ function renderCatalogo() {
     </div>`;
   }).join('');
 
-  // Event delegation — un solo listener en el contenedor
-  cont.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const action    = btn.dataset.action;
-    const id_materia = Number(btn.dataset.idMateria || btn.dataset['id-materia']);
-    const id_grupo   = Number(btn.dataset.idGrupo   || btn.dataset['id-grupo']);
-    if (action === 'toggle')  toggleGrupo(id_materia, id_grupo);
-    if (action === 'empalme') showToast('Empalme de horario', 'Este grupo se traslapa con otra materia seleccionada.', 'bad');
-  });
+
 
   renderSelPanel();
 }
+
+// ── Estado global — agrega esta línea junto a las demás ──
+let gruposEnDB = [];   // ids de grupos ya confirmados en BD
 
 function renderSelPanel() {
   const sel  = Object.entries(inscritas);
@@ -232,10 +260,6 @@ function renderSelPanel() {
     </div>`;
   }).join('');
 
-  list.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action="quitar"]');
-    if (btn) quitarMateria(Number(btn.dataset.idMat || btn.dataset['id-mat']));
-  });
 }
 
 // =====================================================
@@ -274,7 +298,7 @@ function renderCarga() {
     }).join('');
   }
 
-  renderWeekGrid(document.getElementById('weekgrid-carga'), inscritasToClases());
+  renderWeekGrid(document.getElementById('weekgrid-carga'), inscritasToClases(), { h0: 7, h1: 15 });
 }
 
 // =====================================================
@@ -299,14 +323,14 @@ function toggleGrupo(id_materia, id_grupo) {
   }
   renderCatalogo();
   renderCarga();
-  renderWeekGrid(document.getElementById('weekgrid-info'), inscritasToClases());
+  renderWeekGrid(document.getElementById('weekgrid-info'),  inscritasToClases(), { h0: 7, h1: 15 });
 }
 
 function quitarMateria(id_materia) {
   delete inscritas[id_materia];
   renderCatalogo();
   renderCarga();
-  renderWeekGrid(document.getElementById('weekgrid-info'), inscritasToClases());
+  renderWeekGrid(document.getElementById('weekgrid-info'),  inscritasToClases(), { h0: 7, h1: 15 });
 }
 
 // =====================================================
@@ -317,11 +341,22 @@ async function confirmarInscripcion() {
   btn.disabled  = true;
   btn.innerHTML = `<span class="loader"></span> Inscribiendo...`;
 
-  const grupos   = Object.values(inscritas);
-  let exitosos   = 0;
-  const errores  = [];
+  // Solo los grupos que aún no están confirmados en BD
+  const yaEnDB  = new Set(gruposEnDB);   // ids que vinieron de getInfo
+  const nuevos  = Object.values(inscritas).filter(gr => !yaEnDB.has(gr.id_grupo));
 
-  for (const gr of grupos) {
+  if (nuevos.length === 0) {
+    showToast('Sin cambios', 'Ya tienes estos grupos inscritos.', 'info');
+    btn.disabled  = false;
+    btn.innerHTML = `${icon('check', 16, 2)} Confirmar inscripción`;
+    goSection('sec-carga');
+    return;
+  }
+
+  let exitosos  = 0;
+  const errores = [];
+
+  for (const gr of nuevos) {
     try {
       const res  = await fetch(`${API_URL}/api/alumno/carga`, {
         method:  'POST',
@@ -329,9 +364,8 @@ async function confirmarInscripcion() {
         body:    JSON.stringify({ id_alumno: usuario.id, id_grupo: gr.id_grupo, periodo: PERIODO })
       });
       const data = await res.json();
-      if (res.ok) {
-        exitosos++;
-      } else {
+      if (res.ok) exitosos++;
+      else {
         const mat = oferta.find(m => m.grupos.some(g => g.id_grupo === gr.id_grupo));
         errores.push(`${mat?.clave || gr.id_grupo}: ${data.error}`);
       }
@@ -346,11 +380,9 @@ async function confirmarInscripcion() {
   if (errores.length === 0) {
     showToast('¡Inscripción completada!', `${exitosos} materias inscritas correctamente.`, 'ok');
     goSection('sec-carga');
-    renderCarga();
   } else if (exitosos > 0) {
     showToast('Inscripción parcial', `${exitosos} inscritas. Errores: ${errores.join(' | ')}`, 'bad');
     goSection('sec-carga');
-    renderCarga();
   } else {
     showToast('Error en la inscripción', errores.join(' | '), 'bad');
   }
@@ -397,5 +429,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnLogout').addEventListener('click', () => {
     sessionStorage.removeItem('usuario');
     window.location.href = '../../index.html';
+  });
+
+
+  // Catálogo — agregar/quitar grupos
+  document.getElementById('catalogo-container').addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action     = btn.dataset.action;
+  const id_materia = Number(btn.dataset.idMateria);
+  const id_grupo   = Number(btn.dataset.idGrupo);
+  if (action === 'toggle')  toggleGrupo(id_materia, id_grupo);
+  if (action === 'empalme') showToast('Empalme de horario', 'Este grupo se traslapa con otra materia seleccionada.', 'bad');
+  });
+
+// Panel de selección — quitar materia
+  document.getElementById('sel-list').addEventListener('click', e => {
+  const btn = e.target.closest('[data-action="quitar"]');
+  if (btn) quitarMateria(Number(btn.dataset.idMat));
   });
 });

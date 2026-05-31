@@ -8,7 +8,7 @@
 const { getPool, sql } = require('../../db');
 
 async function handle(req, res) {
-  const params = new URL(req.url, 'http://localhost').searchParams;
+  const params    = new URL(req.url, 'http://localhost').searchParams;
   const id_alumno = parseInt(params.get('id_alumno'));
 
   if (!id_alumno) {
@@ -42,35 +42,37 @@ async function handle(req, res) {
     const alumno = alumnoRes.recordset[0];
 
     // 2. Obtener grupos disponibles de la carrera del alumno
+    //    CONVERT(VARCHAR(5), hora, 108) fuerza el formato 'HH:MM'
+    //    y evita que mssql serialice TIME como objeto Date en el JSON
     const gruposRes = await pool.request()
       .input('id_carrera', sql.Int, alumno.id_carrera)
       .query(`
         SELECT
           g.id_grupo,
-          g.clave          AS grupo_clave,
+          g.clave                                    AS grupo_clave,
           g.cupo_disponible,
           g.cupo_max,
           m.id_materia,
-          m.nombre         AS materia,
-          m.clave          AS materia_clave,
+          m.nombre                                   AS materia,
+          m.clave                                    AS materia_clave,
           m.creditos,
-          ud.nombre        AS docente,
-          a.numero         AS aula_numero,
+          ud.nombre                                  AS docente,
+          a.numero                                   AS aula_numero,
           a.edificio,
           h.id_horario,
           h.dias,
-          h.hora_inicio,
-          h.hora_fin,
+          CONVERT(VARCHAR(5), h.hora_inicio, 108)    AS hora_inicio,
+          CONVERT(VARCHAR(5), h.hora_fin,    108)    AS hora_fin,
           oa.periodo
         FROM grupo g
-        JOIN materia m           ON g.id_materia  = m.id_materia
-        JOIN docente d           ON g.id_docente  = d.id_docente
-        JOIN usuario ud          ON d.id_docente  = ud.id_usuario
-        JOIN aula a              ON g.id_aula     = a.id_aula
-        JOIN horario h           ON g.id_horario  = h.id_horario
+        JOIN materia          m  ON g.id_materia  = m.id_materia
+        JOIN docente          d  ON g.id_docente  = d.id_docente
+        JOIN usuario          ud ON d.id_docente  = ud.id_usuario
+        JOIN aula             a  ON g.id_aula     = a.id_aula
+        JOIN horario          h  ON g.id_horario  = h.id_horario
         JOIN oferta_academica oa ON g.id_oferta   = oa.id_oferta
-        WHERE g.estado    = 'disponible'
-          AND oa.estado   = 'publicada'
+        WHERE g.estado     = 'disponible'
+          AND oa.estado    = 'publicada'
           AND m.id_carrera = @id_carrera
         ORDER BY m.nombre, g.clave
       `);
@@ -80,11 +82,11 @@ async function handle(req, res) {
     for (const row of gruposRes.recordset) {
       if (!materiasMap[row.id_materia]) {
         materiasMap[row.id_materia] = {
-          id_materia:    row.id_materia,
-          nombre:        row.materia,
-          clave:         row.materia_clave,
-          creditos:      row.creditos,
-          grupos:        []
+          id_materia: row.id_materia,
+          nombre:     row.materia,
+          clave:      row.materia_clave,
+          creditos:   row.creditos,
+          grupos:     []
         };
       }
       materiasMap[row.id_materia].grupos.push({
@@ -97,8 +99,8 @@ async function handle(req, res) {
         horario: {
           id_horario:  row.id_horario,
           dias:        row.dias,
-          hora_inicio: row.hora_inicio,
-          hora_fin:    row.hora_fin
+          hora_inicio: row.hora_inicio,   // 'HH:MM' garantizado
+          hora_fin:    row.hora_fin        // 'HH:MM' garantizado
         }
       });
     }
