@@ -10,8 +10,16 @@ let PERIODO    = '—';
 let CARGA_MAX  = 7;       // 7 regular · 4 irregular
 let oferta     = [];      // materias con grupos del API
 let inscritas  = {};      // { id_materia: grupoObj }
-let alumnoInfo = {};      // { tipo_alumno, carrera }
+let alumnoInfo = {};      // datos completos del alumno (getInfo)
+let alumnoOferta = {};    // { tipo_alumno, carrera } (getGrupos)
 let usuario    = {};      // sesión del sessionStorage
+let gruposEnDB = [];      // ids de grupos ya confirmados en BD
+
+// Mapeo de nombres completos de días al formato corto del WeekGrid
+const DIAS_MAP = {
+  'Lunes': 'Lun', 'Martes': 'Mar', 'Miércoles': 'Mié',
+  'Jueves': 'Jue', 'Viernes': 'Vie'
+};
 
 // =====================================================
 //  CARGA INICIAL DESDE EL API
@@ -26,19 +34,20 @@ async function cargarOferta() {
       return;
     }
 
-    PERIODO    = data.periodo  || '—';
-    oferta     = data.materias || [];
-    alumnoInfo = data.alumno   || {};
-    CARGA_MAX  = alumnoInfo.tipo_alumno === 'irregular' ? 4 : 7;
+    PERIODO      = data.periodo  || '—';
+    oferta       = data.materias || [];
+    alumnoOferta = data.alumno   || {};
+    CARGA_MAX    = alumnoOferta.tipo_alumno === 'irregular' ? 4 : 7;
 
     document.getElementById('header-period-text').textContent  = PERIODO;
     document.getElementById('sidebar-period-name').textContent = PERIODO;
 
-    await sincronizarInscritasDesdeDB();  // ← asegúrate que tenga await
+    await sincronizarInscritasDesdeDB();
 
-    renderInfoEscolar();   // ← estos tres van DESPUÉS del await
+    renderInfoEscolar();
     renderCatalogo();
     renderCarga();
+    renderHorario();
 
   } catch (err) {
     console.error('cargarOferta:', err);
@@ -46,20 +55,23 @@ async function cargarOferta() {
   }
 }
 
-// =====================================================
-//  UTILIDADES
-// =====================================================
-
 async function sincronizarInscritasDesdeDB() {
   try {
     const res  = await fetch(`${API_URL}/api/alumno/info?id_alumno=${usuario.id}`);
-    const info = await res.json();   // ← renombrado a "info" para evitar confusión
+    const info = await res.json();
 
-    if (!res.ok || !info.grupos || info.grupos.length === 0) return;
-    if (info.periodo !== PERIODO) return;
+    if (!res.ok || !info.grupos || info.grupos.length === 0) {
+      alumnoInfo = info.alumno || {};
+      return;
+    }
+    if (info.periodo !== PERIODO) {
+      alumnoInfo = info.alumno || {};
+      return;
+    }
 
-    inscritas  = {};
+    alumnoInfo = info.alumno || {};
     gruposEnDB = info.grupos.map(g => g.id_grupo);
+    inscritas  = {};
 
     for (const gr of info.grupos) {
       const mat = oferta.find(m => m.grupos.some(g => g.id_grupo === gr.id_grupo));
@@ -72,6 +84,10 @@ async function sincronizarInscritasDesdeDB() {
     console.error('sincronizarInscritasDesdeDB:', err);
   }
 }
+
+// =====================================================
+//  UTILIDADES
+// =====================================================
 function fmtHora(t) {
   return String(t).slice(0, 5);
 }
@@ -113,11 +129,6 @@ function creditosInscritos() {
   }, 0);
 }
 
-const DIAS_MAP = {
-  'Lunes': 'Lun', 'Martes': 'Mar', 'Miércoles': 'Mié',
-  'Jueves': 'Jue', 'Viernes': 'Vie'
-};
-
 function inscritasToClases() {
   return Object.entries(inscritas).map(([id_mat, gr]) => {
     const mat  = oferta.find(m => m.id_materia === Number(id_mat));
@@ -143,16 +154,37 @@ function renderInfoEscolar() {
   const sel  = Object.keys(inscritas).length;
   const cred = creditosInscritos();
 
-  document.getElementById('info-nombre').textContent       = usuario.nombre || '—';
-  document.getElementById('info-carrera').textContent      = alumnoInfo.carrera || '—';
-  document.getElementById('info-tipo').textContent         = alumnoInfo.tipo_alumno === 'irregular' ? 'Irregular' : 'Regular';
+  // Datos de perfil — usa alumnoInfo (getInfo) si está disponible,
+  // si no cae a alumnoOferta (getGrupos)
+  const nombre    = usuario.nombre || '—';
+  const email     = alumnoInfo.email      || '—';
+  const matricula = alumnoInfo.matricula  || '—';
+  const carrera   = alumnoInfo.carrera    || alumnoOferta.carrera || '—';
+  const semestre  = alumnoInfo.semestre   || '—';
+  const tipo      = (alumnoInfo.tipo_alumno || alumnoOferta.tipo_alumno) === 'irregular' ? 'Irregular' : 'Regular';
+  const pago      = alumnoInfo.estado_pago || 'vigente';
+
+  document.getElementById('info-subtitulo').textContent  = `${carrera} · ${PERIODO}`;
+  document.getElementById('info-nombre').textContent     = nombre;
+  document.getElementById('info-email').textContent      = email;
+  document.getElementById('info-matricula').textContent  = matricula;
+  document.getElementById('info-carrera').textContent    = carrera;
+  document.getElementById('info-semestre').textContent   = semestre ? `${semestre}°` : '—';
+  document.getElementById('info-tipo').textContent       = tipo;
+
+  const pagoBadge = document.getElementById('info-pago');
+  if (pago === 'vigente') {
+    pagoBadge.className   = 'badge badge--ok';
+    pagoBadge.textContent = 'Pago vigente';
+  } else {
+    pagoBadge.className   = 'badge badge--bad';
+    pagoBadge.textContent = 'Adeudo pendiente';
+  }
+
   document.getElementById('info-materias-sel').textContent = sel;
   document.getElementById('info-creditos-sel').textContent = cred;
-  document.getElementById('info-carga-max').textContent    = `${CARGA_MAX} materias`;
-  document.getElementById('info-estatus').innerHTML        = `${icon('check', 12, 2.5)} Activo`;
-  document.getElementById('info-subtitulo').textContent    = `${alumnoInfo.carrera || '—'} · ${PERIODO}`;
-
-  renderWeekGrid(document.getElementById('weekgrid-info'),  inscritasToClases(), { h0: 7, h1: 15 });
+  document.getElementById('info-carga-max').textContent    = `${CARGA_MAX}`;
+  document.getElementById('info-estatus').textContent      = sel > 0 ? 'En proceso' : 'Sin carga';
 }
 
 // =====================================================
@@ -161,13 +193,14 @@ function renderInfoEscolar() {
 function renderCatalogo() {
   const sel  = Object.keys(inscritas).length;
   const cred = creditosInscritos();
+  const carrera = alumnoInfo.carrera || alumnoOferta.carrera || '—';
 
   document.getElementById('sel-count').textContent      = sel;
   document.getElementById('sel-creditos').textContent   = cred;
-  document.getElementById('sel-subtitulo').textContent  = `${alumnoInfo.carrera || '—'} · ${PERIODO}`;
+  document.getElementById('sel-subtitulo').textContent  = `${carrera} · ${PERIODO}`;
   document.getElementById('sel-status-badge').innerHTML = `${icon('clock', 14)} Inscripciones abiertas`;
   document.getElementById('sel-prog-bar').style.width   = Math.min(100, sel / CARGA_MAX * 100) + '%';
-  document.getElementById('btn-confirmar').disabled     = sel === 0;
+  document.getElementById('btn-confirmar').disabled     = sel === 0 || sel === gruposEnDB.length;
 
   const cont = document.getElementById('catalogo-container');
 
@@ -229,13 +262,8 @@ function renderCatalogo() {
     </div>`;
   }).join('');
 
-
-
   renderSelPanel();
 }
-
-// ── Estado global — agrega esta línea junto a las demás ──
-let gruposEnDB = [];   // ids de grupos ya confirmados en BD
 
 function renderSelPanel() {
   const sel  = Object.entries(inscritas);
@@ -259,7 +287,6 @@ function renderSelPanel() {
       </button>
     </div>`;
   }).join('');
-
 }
 
 // =====================================================
@@ -298,7 +325,80 @@ function renderCarga() {
     }).join('');
   }
 
-  renderWeekGrid(document.getElementById('weekgrid-carga'), inscritasToClases(), { h0: 7, h1: 15 });
+  renderWeekGrid(document.getElementById('weekgrid-carga'), inscritasToClases());
+}
+
+// =====================================================
+//  RENDER — Mi horario (kardex + grid desde BD)
+// =====================================================
+function renderHorario() {
+  const sel  = Object.entries(inscritas);
+  const cred = creditosInscritos();
+  const carrera = alumnoInfo.carrera || alumnoOferta.carrera || '—';
+
+  document.getElementById('horario-subtitulo').textContent = `${carrera} · ${PERIODO}`;
+
+  const empty   = document.getElementById('horario-empty');
+  const kardex  = document.getElementById('horario-kardex-wrap');
+  const listEl  = document.getElementById('horario-list');
+
+  if (sel.length === 0) {
+    empty.style.display  = 'block';
+    kardex.style.display = 'none';
+    listEl.innerHTML     = '';
+    document.getElementById('weekgrid-horario').innerHTML = '';
+    document.getElementById('horario-creditos-badge').textContent = '';
+    return;
+  }
+
+  empty.style.display  = 'none';
+  kardex.style.display = 'block';
+
+  // Badge créditos
+  document.getElementById('horario-creditos-badge').textContent = `${cred} créditos`;
+
+  // Totales
+  document.getElementById('horario-total-mat').textContent  = sel.length;
+  document.getElementById('horario-total-cred').textContent = cred;
+
+  // Tabla kardex
+  const tbody = document.getElementById('horario-tbody');
+  tbody.innerHTML = sel.map(([id_mat, gr], i) => {
+    const mat = oferta.find(m => m.id_materia === Number(id_mat));
+    const bg  = i % 2 === 0 ? 'var(--bg)' : '#fff';
+    const dot = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;
+                  background:${escapeHtml(colorByClave(mat?.clave || id_mat))};
+                  margin-right:8px;vertical-align:middle;"></span>`;
+    return `<tr style="background:${bg};">
+      <td><span style="font-size:11px;font-weight:800;color:var(--tinto-700);">${escapeHtml(mat?.clave || '—')}</span></td>
+      <td style="font-weight:600;">${dot}${escapeHtml(mat?.nombre || '—')}</td>
+      <td style="color:var(--muted);">${escapeHtml(gr.clave)}</td>
+      <td style="color:var(--muted);">${escapeHtml(gr.docente)}</td>
+      <td style="color:var(--muted);">${escapeHtml(fmtHorario(gr))}</td>
+      <td style="color:var(--muted);">${escapeHtml(gr.aula)}</td>
+      <td style="text-align:center;font-weight:800;color:var(--tinto-700);">${mat?.creditos || 0}</td>
+    </tr>`;
+  }).join('');
+
+  // Lista lateral
+  listEl.innerHTML = sel.map(([id_mat, gr]) => {
+    const mat = oferta.find(m => m.id_materia === Number(id_mat));
+    return `<div class="list-item">
+      <span class="clave">${escapeHtml(mat?.clave || '—')}</span>
+      <div class="list-item__body">
+        <div class="list-item__title">${escapeHtml(mat?.nombre || '—')}</div>
+        <div class="list-item__meta">
+          <span class="list-item__meta-item">${icon('user',  13)} ${escapeHtml(gr.docente)}</span>
+          <span class="list-item__meta-item">${icon('pin',   13)} ${escapeHtml(gr.aula)}</span>
+          <span class="list-item__meta-item">${icon('clock', 13)} ${escapeHtml(fmtHorario(gr))}</span>
+        </div>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:var(--tinto-700);">${mat?.creditos || 0} créd.</span>
+    </div>`;
+  }).join('');
+
+  // Grid semanal
+  renderWeekGrid(document.getElementById('weekgrid-horario'), inscritasToClases());
 }
 
 // =====================================================
@@ -323,14 +423,14 @@ function toggleGrupo(id_materia, id_grupo) {
   }
   renderCatalogo();
   renderCarga();
-  renderWeekGrid(document.getElementById('weekgrid-info'),  inscritasToClases(), { h0: 7, h1: 15 });
+  renderHorario();
 }
 
 function quitarMateria(id_materia) {
   delete inscritas[id_materia];
   renderCatalogo();
   renderCarga();
-  renderWeekGrid(document.getElementById('weekgrid-info'),  inscritasToClases(), { h0: 7, h1: 15 });
+  renderHorario();
 }
 
 // =====================================================
@@ -341,9 +441,8 @@ async function confirmarInscripcion() {
   btn.disabled  = true;
   btn.innerHTML = `<span class="loader"></span> Inscribiendo...`;
 
-  // Solo los grupos que aún no están confirmados en BD
-  const yaEnDB  = new Set(gruposEnDB);   // ids que vinieron de getInfo
-  const nuevos  = Object.values(inscritas).filter(gr => !yaEnDB.has(gr.id_grupo));
+  const yaEnDB = new Set(gruposEnDB);
+  const nuevos = Object.values(inscritas).filter(gr => !yaEnDB.has(gr.id_grupo));
 
   if (nuevos.length === 0) {
     showToast('Sin cambios', 'Ya tienes estos grupos inscritos.', 'info');
@@ -364,8 +463,9 @@ async function confirmarInscripcion() {
         body:    JSON.stringify({ id_alumno: usuario.id, id_grupo: gr.id_grupo, periodo: PERIODO })
       });
       const data = await res.json();
-      if (res.ok) exitosos++;
-      else {
+      if (res.ok) {
+        exitosos++;
+      } else {
         const mat = oferta.find(m => m.grupos.some(g => g.id_grupo === gr.id_grupo));
         errores.push(`${mat?.clave || gr.id_grupo}: ${data.error}`);
       }
@@ -399,16 +499,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Íconos del shell
   fillShell(usuario, '—');
-  document.getElementById('header-user-role').textContent = 'Alumno';
-  document.getElementById('header-period-icon').innerHTML = icon('clock', 17);
-  document.getElementById('ico-bell').innerHTML           = icon('bell', 20);
-  document.getElementById('ico-logout').innerHTML         = icon('logout', 16, 2);
-  document.getElementById('ico-nav-id').innerHTML         = icon('id', 21);
-  document.getElementById('ico-nav-addbook').innerHTML    = icon('addbook', 21);
-  document.getElementById('ico-nav-doc').innerHTML        = icon('doc', 21);
-  document.getElementById('ico-btn-check').innerHTML      = icon('check', 16, 2);
+  document.getElementById('header-user-role').textContent  = 'Alumno';
+  document.getElementById('header-period-icon').innerHTML  = icon('clock',    17);
+  document.getElementById('ico-bell').innerHTML            = icon('bell',     20);
+  document.getElementById('ico-logout').innerHTML          = icon('logout',   16, 2);
+  document.getElementById('ico-nav-id').innerHTML          = icon('id',       21);
+  document.getElementById('ico-nav-addbook').innerHTML     = icon('addbook',  21);
+  document.getElementById('ico-nav-doc').innerHTML         = icon('doc',      21);
+  document.getElementById('ico-nav-calendar').innerHTML    = icon('calendar', 21);
+  document.getElementById('ico-btn-check').innerHTML       = icon('check',    16, 2);
+  document.getElementById('ico-profile-user').innerHTML    = icon('user',     36, 1.4);
 
-  // Cargar oferta desde el API
+  // Cargar datos
   await cargarOferta();
 
   // Navegación entre secciones
@@ -419,7 +521,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (sec === 'sec-info')      renderInfoEscolar();
       if (sec === 'sec-seleccion') renderCatalogo();
       if (sec === 'sec-carga')     renderCarga();
+      if (sec === 'sec-horario')   renderHorario();
     });
+  });
+
+  // Event delegation — catálogo (registrado una sola vez)
+  document.getElementById('catalogo-container').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action     = btn.dataset.action;
+    const id_materia = Number(btn.dataset.idMateria);
+    const id_grupo   = Number(btn.dataset.idGrupo);
+    if (action === 'toggle')  toggleGrupo(id_materia, id_grupo);
+    if (action === 'empalme') showToast('Empalme de horario', 'Este grupo se traslapa con otra materia seleccionada.', 'bad');
+  });
+
+  // Event delegation — panel de selección (registrado una sola vez)
+  document.getElementById('sel-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="quitar"]');
+    if (btn) quitarMateria(Number(btn.dataset.idMat));
+  });
+
+  // Link vacío → ir a selección
+  document.getElementById('link-ir-seleccion').addEventListener('click', e => {
+    e.preventDefault();
+    goSection('sec-seleccion');
   });
 
   // Confirmar inscripción
@@ -429,23 +555,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnLogout').addEventListener('click', () => {
     sessionStorage.removeItem('usuario');
     window.location.href = '../../index.html';
-  });
-
-
-  // Catálogo — agregar/quitar grupos
-  document.getElementById('catalogo-container').addEventListener('click', e => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  const action     = btn.dataset.action;
-  const id_materia = Number(btn.dataset.idMateria);
-  const id_grupo   = Number(btn.dataset.idGrupo);
-  if (action === 'toggle')  toggleGrupo(id_materia, id_grupo);
-  if (action === 'empalme') showToast('Empalme de horario', 'Este grupo se traslapa con otra materia seleccionada.', 'bad');
-  });
-
-// Panel de selección — quitar materia
-  document.getElementById('sel-list').addEventListener('click', e => {
-  const btn = e.target.closest('[data-action="quitar"]');
-  if (btn) quitarMateria(Number(btn.dataset.idMat));
   });
 });
