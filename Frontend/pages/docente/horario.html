@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTM — Mi Horario</title>
+  <link rel="stylesheet" href="../../css/estilos.css" />
+  <style>
+    .horario-layout { display: grid; grid-template-columns: 400px 1fr; gap: 24px; align-items: start; }
+    .section-subtitle { font-family: var(--logo); font-weight: 700; font-size: 19px; color: var(--ink); margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ═══ Header ═══ -->
+  <header class="app-header">
+    <img src="../../assets/utm-icon-white.png" class="header-logo-img" alt="UTM" />
+    <div class="header-brand">
+      <div class="header-brand__utm">UTM</div>
+      <div class="header-brand__system">Sistema de Carga Académica Digital</div>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-period">
+      <span id="header-period-icon"></span>
+      <span id="header-period-text">Enero – Junio 2026</span>
+    </div>
+    <button class="header-bell" title="Notificaciones">
+      <span id="ico-bell"></span>
+      <span class="header-bell__dot"></span>
+    </button>
+    <div class="header-divider"></div>
+    <div class="header-user">
+      <div class="header-user__name" id="header-user-name">—</div>
+      <div class="header-user__role" id="header-user-role">Docente</div>
+    </div>
+    <button class="header-logout" id="btnLogout">
+      <span id="ico-logout"></span> Cerrar sesión
+    </button>
+  </header>
+
+  <!-- ═══ Contenido ═══ -->
+  <div class="content-area">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__label">Menú</div>
+      <nav class="sidebar__nav">
+        <button class="nav-btn active" data-section="sec-horario">
+          <span class="nav-icon" id="ico-nav-calendar"></span>
+          <span>Mi horario</span>
+        </button>
+      </nav>
+      <div class="sidebar__spacer"></div>
+      <div class="sidebar__period-card">
+        <img src="../../assets/utm-icon.png" class="sidebar__period-bg" aria-hidden="true" />
+        <div class="sidebar__period-label">Periodo activo</div>
+        <div class="sidebar__period-name" id="sidebar-period-name">Enero – Junio 2026</div>
+        <div class="sidebar__period-status">Inscripciones abiertas</div>
+      </div>
+      <div class="greca greca-small"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <img src="../../assets/utm-icon.png" class="main-content__bg" aria-hidden="true" />
+      <div class="main-inner">
+
+        <!-- ── SECCIÓN: Mi horario ── -->
+        <section id="sec-horario" class="section active">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Mi horario</h1>
+              <p class="page-header__sub" id="horario-subtitulo">—</p>
+            </div>
+            <button class="btn btn--default" id="btn-descargar">
+              <span id="ico-download"></span> Descargar horario
+            </button>
+          </div>
+
+          <!-- Badges resumen -->
+          <div class="flex gap-10 mb-22" id="horario-badges"></div>
+
+          <!-- Layout: lista + grid -->
+          <div class="horario-layout">
+            <div id="horario-list" style="display:flex;flex-direction:column;gap:11px;"></div>
+            <div>
+              <div class="section-subtitle">Horario semanal</div>
+              <div id="weekgrid-horario"></div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /main-inner -->
+    </main>
+
+  </div><!-- /content-area -->
+</div><!-- /app-shell -->
+
+<script src="../../js/app.js"></script>
+<script>
+// ===================================================
+//  DATOS MOCK — se reemplazarán con llamadas al API
+// ===================================================
+const PERIODO = 'Enero – Junio 2026';
+
+// Info del docente (vendrá del API: GET /api/docente/info)
+const DOCENTE_INFO = {
+  nombre: 'Dr. Tomás Aguilar Vega',
+  num:    'PTC-0481',
+  depto:  'Ingeniería en Sistemas',
+};
+
+// Horario asignado (vendrá del API: GET /api/docente/horario)
+const HORARIO = [
+  { clave:'ISC-6A', materia:'Bases de Datos Avanzadas',       horario:{dias:['Lun','Mié'], ini:7,  fin:9},  aula:'L-204', alumnos:32 },
+  { clave:'ISC-6B', materia:'Bases de Datos Avanzadas',       horario:{dias:['Mar','Jue'], ini:9,  fin:11}, aula:'L-204', alumnos:30 },
+  { clave:'ISC-8A', materia:'Minería de Datos',               horario:{dias:['Lun','Mié'], ini:11, fin:13}, aula:'L-210', alumnos:24 },
+  { clave:'ISC-2A', materia:'Fundamentos de Programación',    horario:{dias:['Vie'],       ini:7,  fin:11}, aula:'T-112', alumnos:38 },
+];
+
+function fmtHorario(h) {
+  const f = n => String(n).padStart(2, '0') + ':00';
+  return `${h.dias.join(' y ')} · ${f(h.ini)}–${f(h.fin)}`;
+}
+
+// ===================================================
+//  RENDER
+// ===================================================
+function renderHorario() {
+  const total = HORARIO.reduce((s, g) => s + g.alumnos, 0);
+
+  document.getElementById('horario-subtitulo').textContent =
+    `${DOCENTE_INFO.nombre} · ${DOCENTE_INFO.depto}`;
+
+  // Badges
+  document.getElementById('horario-badges').innerHTML = `
+    <span class="badge badge--gray badge--lg">${PERIODO}</span>
+    <span class="badge badge--tinto badge--lg">${HORARIO.length} grupos asignados</span>
+    <span class="badge badge--tinto badge--lg">${icon('users',13)} ${total} alumnos</span>
+  `;
+
+  // Lista de grupos
+  document.getElementById('horario-list').innerHTML = HORARIO.map(g => `
+    <div class="list-item">
+      <span class="clave">${escapeHtml(g.clave)}</span>
+      <div class="list-item__body">
+        <div class="list-item__title">${escapeHtml(g.materia)}</div>
+        <div class="list-item__meta">
+          <span class="list-item__meta-item">${icon('clock',13)} ${escapeHtml(fmtHorario(g.horario))}</span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">${escapeHtml(g.aula)}</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;">${g.alumnos} alumnos</div>
+      </div>
+    </div>
+  `).join('');
+
+  // WeekGrid
+  const clases = HORARIO.map(g => ({
+    dias:  g.horario.dias,
+    ini:   g.horario.ini,
+    fin:   g.horario.fin,
+    label: g.clave,
+    sub:   `${g.materia.slice(0, 16)} · ${g.aula}`,
+    color: colorByClave(g.clave),
+  }));
+  renderWeekGrid(document.getElementById('weekgrid-horario'), clases);
+}
+
+// ===================================================
+//  INICIALIZACIÓN
+// ===================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const usuario = requireAuth('../../index.html');
+  if (!usuario) return;
+
+  fillShell(usuario, PERIODO);
+  document.getElementById('header-user-name').textContent = DOCENTE_INFO.nombre;
+  document.getElementById('header-user-role').textContent = 'Docente';
+
+  // Íconos
+  document.getElementById('header-period-icon').innerHTML   = icon('clock', 17);
+  document.getElementById('ico-bell').innerHTML             = icon('bell', 20);
+  document.getElementById('ico-logout').innerHTML           = icon('logout', 16, 2);
+  document.getElementById('ico-nav-calendar').innerHTML     = icon('calendar', 21);
+  document.getElementById('ico-download').innerHTML         = icon('download', 16, 2);
+
+  // Render
+  renderHorario();
+
+  // Descargar
+  document.getElementById('btn-descargar').addEventListener('click', () => {
+    showToast('Descargando', 'Tu horario se está preparando…', 'info');
+  });
+
+  // Cerrar sesión
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    sessionStorage.removeItem('usuario');
+    window.location.href = '../../index.html';
+  });
+});
+</script>
+</body>
+</html>

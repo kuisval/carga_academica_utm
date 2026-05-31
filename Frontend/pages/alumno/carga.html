@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTM — Carga Académica</title>
+  <link rel="stylesheet" href="../../css/estilos.css" />
+  <style>
+    /* Layout de dos columnas para selección y carga */
+    .two-col      { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
+    .two-col-inv  { display: grid; grid-template-columns: 400px 1fr; gap: 24px; align-items: start; }
+    .info-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .section-subtitle { font-family: var(--logo); font-weight: 700; font-size: 19px; color: var(--ink); margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ═══ Header ═══ -->
+  <header class="app-header">
+    <img src="../../assets/utm-icon-white.png" class="header-logo-img" alt="UTM" />
+    <div class="header-brand">
+      <div class="header-brand__utm">UTM</div>
+      <div class="header-brand__system">Sistema de Carga Académica Digital</div>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-period">
+      <span id="header-period-icon"></span>
+      <span id="header-period-text">Enero – Junio 2026</span>
+    </div>
+    <button class="header-bell" title="Notificaciones">
+      <span id="ico-bell"></span>
+      <span class="header-bell__dot"></span>
+    </button>
+    <div class="header-divider"></div>
+    <div class="header-user">
+      <div class="header-user__name" id="header-user-name">—</div>
+      <div class="header-user__role" id="header-user-role">Alumno</div>
+    </div>
+    <button class="header-logout" id="btnLogout">
+      <span id="ico-logout"></span> Cerrar sesión
+    </button>
+  </header>
+
+  <!-- ═══ Contenido ═══ -->
+  <div class="content-area">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__label">Menú</div>
+      <nav class="sidebar__nav">
+        <button class="nav-btn active" data-section="sec-info">
+          <span class="nav-icon" id="ico-nav-id"></span>
+          <span>Información escolar</span>
+        </button>
+        <button class="nav-btn" data-section="sec-seleccion">
+          <span class="nav-icon" id="ico-nav-addbook"></span>
+          <span>Selección de materias</span>
+        </button>
+        <button class="nav-btn" data-section="sec-carga">
+          <span class="nav-icon" id="ico-nav-doc"></span>
+          <span>Carga académica</span>
+        </button>
+      </nav>
+      <div class="sidebar__spacer"></div>
+      <div class="sidebar__period-card">
+        <img src="../../assets/utm-icon.png" class="sidebar__period-bg" aria-hidden="true" />
+        <div class="sidebar__period-label">Periodo activo</div>
+        <div class="sidebar__period-name" id="sidebar-period-name">Enero – Junio 2026</div>
+        <div class="sidebar__period-status">Inscripciones abiertas</div>
+      </div>
+      <div class="greca greca-small"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <img src="../../assets/utm-icon.png" class="main-content__bg" aria-hidden="true" />
+      <div class="main-inner">
+
+        <!-- ── SECCIÓN: Información escolar ── -->
+        <section id="sec-info" class="section active">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Información escolar</h1>
+              <p class="page-header__sub" id="info-subtitulo">Matrícula —</p>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="card">
+              <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;">Datos del alumno</div>
+              <div class="info-row"><span class="info-row__label">Nombre</span>        <span class="info-row__value" id="info-nombre">—</span></div>
+              <div class="info-row"><span class="info-row__label">Matrícula</span>     <span class="info-row__value" id="info-matricula">—</span></div>
+              <div class="info-row"><span class="info-row__label">Carrera</span>       <span class="info-row__value" id="info-carrera">—</span></div>
+              <div class="info-row"><span class="info-row__label">Semestre</span>      <span class="info-row__value" id="info-semestre">—</span></div>
+            </div>
+            <div class="card">
+              <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;">Avance académico</div>
+              <div class="info-row"><span class="info-row__label">Promedio general</span>  <span class="info-row__value" id="info-promedio">—</span></div>
+              <div class="info-row"><span class="info-row__label">Créditos cursados</span> <span class="info-row__value" id="info-creditos">—</span></div>
+              <div class="info-row"><span class="info-row__label">Tipo de alumno</span>    <span class="info-row__value" id="info-tipo">—</span></div>
+              <div class="info-row">
+                <span class="info-row__label">Estatus</span>
+                <span class="badge badge--ok" id="info-estatus" style="font-size:13px;"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-subtitle">Mi horario</div>
+          <div id="weekgrid-info"></div>
+        </section>
+
+        <!-- ── SECCIÓN: Selección de materias ── -->
+        <section id="sec-seleccion" class="section">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Selección de materias</h1>
+              <p class="page-header__sub" id="sel-subtitulo">—</p>
+            </div>
+            <div>
+              <span class="badge badge--ok badge--lg" id="sel-status-badge"></span>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <!-- Catálogo -->
+            <div id="catalogo-container"></div>
+
+            <!-- Panel de selección -->
+            <div class="card sel-panel" style="padding:0;">
+              <div class="sel-panel__head">
+                <div class="sel-panel__title">Mi selección</div>
+                <div class="sel-panel__stats">
+                  <div><div class="sel-panel__stat-val" id="sel-count">0</div><div class="sel-panel__stat-lbl">materias</div></div>
+                  <div><div class="sel-panel__stat-val" id="sel-creditos">0</div><div class="sel-panel__stat-lbl" id="sel-max-lbl">de — créditos</div></div>
+                </div>
+                <div class="sel-panel__prog">
+                  <div class="sel-panel__prog-bar" id="sel-prog-bar" style="width:0%"></div>
+                </div>
+              </div>
+              <div class="sel-panel__body">
+                <div id="sel-list"><div class="sel-panel__empty">Aún no has seleccionado materias.<br>Agrégalas desde el catálogo.</div></div>
+                <button class="btn btn--primary btn--full mt-16" id="btn-confirmar" disabled style="padding:14px;">
+                  <span id="ico-btn-check"></span> Confirmar inscripción
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECCIÓN: Carga académica ── -->
+        <section id="sec-carga" class="section">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Mi carga académica</h1>
+              <p class="page-header__sub" id="carga-subtitulo">—</p>
+            </div>
+            <button class="btn btn--default" id="btn-descargar">
+              <span id="ico-download"></span> Descargar horario
+            </button>
+          </div>
+
+          <div class="flex gap-10 mb-22" id="carga-badges"></div>
+
+          <div class="two-col-inv">
+            <div id="carga-list" style="display:flex;flex-direction:column;gap:11px;"></div>
+            <div>
+              <div class="section-subtitle">Horario semanal</div>
+              <div id="weekgrid-carga"></div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /main-inner -->
+    </main>
+
+  </div><!-- /content-area -->
+</div><!-- /app-shell -->
+
+<script src="../../js/app.js"></script>
+<script>
+// ===================================================
+//  DATOS MOCK — se reemplazarán con llamadas al API
+// ===================================================
+const PERIODO  = 'Enero – Junio 2026';
+const MAX_CRED = 42; // créditos máximos (alumno regular)
+
+// Datos del alumno (vendrán del API: GET /api/alumno/info)
+const ALUMNO_MOCK = {
+  nombre:    'Diana Valenzuela Araujo',
+  matricula: '22170842',
+  carrera:   'Ingeniería en Sistemas Computacionales',
+  semestre:  '6° semestre',
+  promedio:  '9.1',
+  creditos:  '212 / 280',
+  tipo:      'regular',
+};
+
+// Oferta académica (vendrá del API: GET /api/alumno/grupos)
+const OFERTA = [
+  { clave:'SIS-601', nombre:'Bases de Datos Avanzadas', creditos:7, cuatri:'6°', tipo:'Obligatoria',
+    grupos:[
+      { g:'A', docente:'Dr. Tomás Aguilar',     horario:{dias:['Lun','Mié'], ini:7, fin:9},  aula:'L-204', ocupado:32, cupo:35 },
+      { g:'B', docente:'Dra. Mariana Sandoval', horario:{dias:['Mar','Jue'], ini:9, fin:11}, aula:'L-204', ocupado:30, cupo:35 },
+    ]},
+  { clave:'SIS-603', nombre:'Ingeniería de Software', creditos:8, cuatri:'6°', tipo:'Obligatoria',
+    grupos:[
+      { g:'A', docente:'Dra. Mariana Sandoval', horario:{dias:['Mar','Jue'], ini:9, fin:11}, aula:'L-206', ocupado:28, cupo:35 },
+    ]},
+  { clave:'SIS-605', nombre:'Redes de Computadoras', creditos:7, cuatri:'6°', tipo:'Obligatoria',
+    grupos:[
+      { g:'A', docente:'Ing. Sofía Maldonado', horario:{dias:['Lun','Mié'], ini:11, fin:13}, aula:'T-110', ocupado:20, cupo:35 },
+    ]},
+  { clave:'SIS-607', nombre:'Programación Web', creditos:8, cuatri:'6°', tipo:'Obligatoria',
+    grupos:[
+      { g:'A', docente:'Mtro. Rodrigo Peña', horario:{dias:['Vie'], ini:7, fin:11}, aula:'L-208', ocupado:25, cupo:35 },
+    ]},
+  { clave:'BAS-602', nombre:'Estadística Aplicada', creditos:6, cuatri:'6°', tipo:'Obligatoria',
+    grupos:[
+      { g:'A', docente:'Dr. Andrés Villalobos', horario:{dias:['Mar','Jue'], ini:13, fin:15}, aula:'A-118', ocupado:18, cupo:35 },
+    ]},
+  { clave:'SIS-651', nombre:'Cómputo en la Nube', creditos:6, cuatri:'6°', tipo:'Optativa',
+    grupos:[
+      { g:'A', docente:'Dr. Tomás Aguilar', horario:{dias:['Lun','Mié'], ini:13, fin:15}, aula:'L-210', ocupado:12, cupo:30 },
+    ]},
+  { clave:'SIS-653', nombre:'Desarrollo de Videojuegos', creditos:6, cuatri:'6°', tipo:'Optativa',
+    grupos:[
+      { g:'A', docente:'Ing. Sofía Maldonado', horario:{dias:['Vie'], ini:11, fin:15}, aula:'L-212', ocupado:22, cupo:30 },
+    ]},
+];
+
+// Inscripciones iniciales del alumno { clave: grupoId }
+// Vendrán del API: GET /api/alumno/carga
+let inscritas = { 'SIS-601':'A', 'SIS-603':'A', 'SIS-605':'A' };
+
+// ===================================================
+//  UTILIDADES
+// ===================================================
+function fmtHorario(h) {
+  const f = n => String(n).padStart(2,'0') + ':00';
+  return `${h.dias.join(' y ')} · ${f(h.ini)}–${f(h.fin)}`;
+}
+function chocan(a, b) {
+  return a.dias.some(d => b.dias.includes(d)) && a.ini < b.fin && b.ini < a.fin;
+}
+function materiaPorClave(c) { return OFERTA.find(m => m.clave === c); }
+function tieneEmpalme(clave, g) {
+  const m = materiaPorClave(clave);
+  const gr = m.grupos.find(x => x.g === g);
+  return Object.entries(inscritas).some(([c2, g2]) => {
+    if (c2 === clave) return false;
+    const gr2 = materiaPorClave(c2).grupos.find(x => x.g === g2);
+    return chocan(gr.horario, gr2.horario);
+  });
+}
+function inscritasToClases() {
+  return Object.entries(inscritas).map(([clave, g]) => {
+    const m = materiaPorClave(clave);
+    const gr = m.grupos.find(x => x.g === g);
+    return { dias:gr.horario.dias, ini:gr.horario.ini, fin:gr.horario.fin, label:clave, sub:`${m.nombre.slice(0,18)} · ${gr.aula}`, color:colorByClave(clave) };
+  });
+}
+function creditosInscritos() {
+  return Object.keys(inscritas).reduce((s, c) => s + materiaPorClave(c).creditos, 0);
+}
+
+// ===================================================
+//  RENDER — Información escolar
+// ===================================================
+function renderInfoEscolar() {
+  document.getElementById('info-nombre').textContent    = ALUMNO_MOCK.nombre;
+  document.getElementById('info-matricula').textContent = ALUMNO_MOCK.matricula;
+  document.getElementById('info-carrera').textContent   = ALUMNO_MOCK.carrera;
+  document.getElementById('info-semestre').textContent  = ALUMNO_MOCK.semestre;
+  document.getElementById('info-promedio').textContent  = ALUMNO_MOCK.promedio;
+  document.getElementById('info-creditos').textContent  = ALUMNO_MOCK.creditos;
+  document.getElementById('info-tipo').textContent      = ALUMNO_MOCK.tipo === 'regular' ? 'Regular' : 'Irregular';
+  document.getElementById('info-estatus').innerHTML     = `${icon('check',12,2.5)} Inscrito`;
+  document.getElementById('info-subtitulo').textContent = `Matrícula ${ALUMNO_MOCK.matricula}`;
+
+  renderWeekGrid(document.getElementById('weekgrid-info'), inscritasToClases());
+}
+
+// ===================================================
+//  RENDER — Catálogo (Selección de materias)
+// ===================================================
+function renderCatalogo() {
+  const cred = creditosInscritos();
+  document.getElementById('sel-count').textContent     = Object.keys(inscritas).length;
+  document.getElementById('sel-creditos').textContent  = cred;
+  document.getElementById('sel-max-lbl').textContent   = `de ${MAX_CRED} créditos`;
+  document.getElementById('sel-prog-bar').style.width  = Math.min(100, cred / MAX_CRED * 100) + '%';
+  document.getElementById('sel-subtitulo').textContent = `${ALUMNO_MOCK.carrera} · ${ALUMNO_MOCK.semestre}`;
+  document.getElementById('sel-status-badge').innerHTML = `${icon('clock',14)} Inscripciones abiertas`;
+  document.getElementById('btn-confirmar').disabled    = Object.keys(inscritas).length === 0;
+
+  // Catálogo — datos escapados + data-* en lugar de onclick inline
+  const cont = document.getElementById('catalogo-container');
+  cont.innerHTML = OFERTA.map(m => {
+    const grupos = m.grupos.map(gr => {
+      const on      = inscritas[m.clave] === gr.g;
+      const lleno   = gr.ocupado >= gr.cupo;
+      const empalme = !on && tieneEmpalme(m.clave, gr.g);
+      const pct     = Math.round(gr.ocupado / gr.cupo * 100);
+      // data-* escapa el valor automáticamente; nunca se ejecuta como código
+      let btnHtml;
+      if (on)
+        btnHtml = `<button class="btn btn--ghost btn-toggle" style="padding:10px 14px;"
+                     data-clave="${escapeHtml(m.clave)}" data-g="${escapeHtml(gr.g)}"
+                     data-action="toggle">${icon('check',16,2)} Inscrito</button>`;
+      else if (lleno)
+        btnHtml = `<button class="btn btn--default" style="padding:10px 14px;" disabled>Lleno</button>`;
+      else if (empalme)
+        btnHtml = `<button class="btn btn--danger btn-toggle" style="padding:10px 14px;"
+                     data-clave="${escapeHtml(m.clave)}" data-g="${escapeHtml(gr.g)}"
+                     data-action="empalme">${icon('alert',15,2)} Empalme</button>`;
+      else
+        btnHtml = `<button class="btn btn--primary btn-toggle" style="padding:10px 14px;"
+                     data-clave="${escapeHtml(m.clave)}" data-g="${escapeHtml(gr.g)}"
+                     data-action="toggle">${icon('plus',16,2)} Agregar</button>`;
+
+      return `<div class="grupo-row ${on ? 'selected' : ''}">
+        <span class="grupo-row__name">Grupo ${escapeHtml(gr.g)}</span>
+        <div class="grupo-row__info">
+          <div class="grupo-row__docente">${escapeHtml(gr.docente)}</div>
+          <div class="grupo-row__meta">
+            <span>${icon('clock',13)} ${escapeHtml(fmtHorario(gr.horario))}</span>
+            <span>${icon('pin',13)} ${escapeHtml(gr.aula)}</span>
+          </div>
+        </div>
+        <div class="grupo-row__cupo">
+          <div class="grupo-row__cupo-txt ${lleno ? 'full' : ''}">${gr.ocupado}/${gr.cupo} lugares</div>
+          <div class="grupo-row__bar"><div class="grupo-row__bar-fill ${lleno ? 'full' : ''}" style="width:${pct}%"></div></div>
+        </div>
+        ${btnHtml}
+      </div>`;
+    }).join('');
+
+    return `<div class="card materia-card">
+      <div class="materia-card__header">
+        <span class="clave">${escapeHtml(m.clave)}</span>
+        <div class="flex-1">
+          <div class="materia-card__name">${escapeHtml(m.nombre)}</div>
+          <div class="materia-card__sub">${m.creditos} créditos · ${escapeHtml(m.cuatri)}</div>
+        </div>
+        <span class="badge ${m.tipo === 'Optativa' ? 'badge--gray' : 'badge--tinto'}">${escapeHtml(m.tipo)}</span>
+      </div>
+      <div class="materia-card__grupos">${grupos}</div>
+    </div>`;
+  }).join('');
+
+  // Event delegation en el catálogo (reemplaza todos los onclick inline)
+  cont.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const { clave, g, action } = btn.dataset;
+    if (action === 'toggle')  toggleGrupo(clave, g);
+    if (action === 'empalme') showToast('Empalme de horario', `${escapeHtml(clave)} se traslapa con otra materia.`, 'bad');
+  }, { once: false });
+
+  // Panel lateral de selección
+  renderSelPanel();
+}
+
+function renderSelPanel() {
+  const sel  = Object.entries(inscritas);
+  const list = document.getElementById('sel-list');
+
+  if (sel.length === 0) {
+    list.innerHTML = `<div class="sel-panel__empty">Aún no has seleccionado materias.<br>Agrégalas desde el catálogo.</div>`;
+  } else {
+    list.innerHTML = sel.map(([clave, g]) => {
+      const m  = materiaPorClave(clave);
+      const gr = m.grupos.find(x => x.g === g);
+      return `<div class="sel-item">
+        <span class="sel-item__dot" style="background:${escapeHtml(colorByClave(clave))};"></span>
+        <div class="sel-item__info">
+          <div class="sel-item__name">${escapeHtml(m.nombre)}</div>
+          <div class="sel-item__sub">${escapeHtml(clave)} · Grupo ${escapeHtml(g)} · ${escapeHtml(fmtHorario(gr.horario))}</div>
+        </div>
+        <button class="sel-item__remove" data-action="quitar" data-clave="${escapeHtml(clave)}" title="Quitar">${icon('x',15)}</button>
+      </div>`;
+    }).join('');
+
+    // Event delegation en el panel de selección
+    list.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="quitar"]');
+      if (btn) quitarMateria(btn.dataset.clave);
+    });
+  }
+}
+
+// ===================================================
+//  RENDER — Carga académica
+// ===================================================
+function renderCarga() {
+  const sel   = Object.entries(inscritas);
+  const cred  = creditosInscritos();
+  const u     = JSON.parse(sessionStorage.getItem('usuario') || '{}');
+  document.getElementById('carga-subtitulo').textContent = `${u.nombre || ALUMNO_MOCK.nombre} · ${ALUMNO_MOCK.semestre}`;
+
+  // Badges
+  document.getElementById('carga-badges').innerHTML = `
+    <span class="badge badge--gray badge--lg">${PERIODO}</span>
+    <span class="badge badge--tinto badge--lg">${sel.length} materias</span>
+    <span class="badge badge--tinto badge--lg">${cred} créditos</span>
+    <span class="badge badge--ok badge--lg">${icon('check',13,2.5)} Inscrito</span>
+  `;
+
+  // Lista de materias
+  const listEl = document.getElementById('carga-list');
+  if (sel.length === 0) {
+    listEl.innerHTML = `<div style="color:var(--muted);font-size:14px;">No tienes materias inscritas.</div>`;
+  } else {
+    listEl.innerHTML = sel.map(([clave, g]) => {
+      const m  = materiaPorClave(clave);
+      const gr = m.grupos.find(x => x.g === g);
+      return `<div class="list-item">
+        <span class="clave">${escapeHtml(clave)}</span>
+        <div class="list-item__body">
+          <div class="list-item__title">${escapeHtml(m.nombre)}</div>
+          <div class="list-item__meta">
+            <span class="list-item__meta-item">${icon('user',13)} ${escapeHtml(gr.docente)}</span>
+            <span class="list-item__meta-item">${icon('pin',13)} ${escapeHtml(gr.aula)}</span>
+          </div>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:var(--tinto-700);">${m.creditos} créd.</span>
+      </div>`;
+    }).join('');
+  }
+
+  renderWeekGrid(document.getElementById('weekgrid-carga'), inscritasToClases());
+}
+
+// ===================================================
+//  ACCIONES
+// ===================================================
+function toggleGrupo(clave, g) {
+  if (inscritas[clave] === g) {
+    delete inscritas[clave];
+  } else {
+    if (tieneEmpalme(clave, g)) {
+      showToast('Empalme de horario', `${clave} se traslapa con otra materia seleccionada.`, 'bad');
+      return;
+    }
+    const m = materiaPorClave(clave);
+    const nuevoCred = creditosInscritos() + m.creditos;
+    if (nuevoCred > MAX_CRED) {
+      showToast('Créditos excedidos', `No puedes exceder ${MAX_CRED} créditos.`, 'bad');
+      return;
+    }
+    inscritas[clave] = g;
+  }
+  renderCatalogo();
+  renderCarga();
+  renderWeekGrid(document.getElementById('weekgrid-info'), inscritasToClases());
+}
+
+function quitarMateria(clave) {
+  delete inscritas[clave];
+  renderCatalogo();
+  renderCarga();
+  renderWeekGrid(document.getElementById('weekgrid-info'), inscritasToClases());
+}
+
+function alertEmpalme(clave) {
+  showToast('Empalme de horario', `${clave} se traslapa con otra materia seleccionada.`, 'bad');
+}
+
+// ===================================================
+//  INICIALIZACIÓN
+// ===================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Auth
+  const usuario = requireAuth('../../index.html');
+  if (!usuario) return;
+
+  // Llenar shell
+  fillShell(usuario, PERIODO);
+  document.getElementById('header-user-role').textContent = 'Alumno';
+  document.getElementById('header-period-icon').innerHTML = icon('clock', 17);
+  document.getElementById('ico-bell').innerHTML           = icon('bell', 20);
+  document.getElementById('ico-logout').innerHTML         = icon('logout', 16, 2);
+  document.getElementById('ico-nav-id').innerHTML         = icon('id', 21);
+  document.getElementById('ico-nav-addbook').innerHTML    = icon('addbook', 21);
+  document.getElementById('ico-nav-doc').innerHTML        = icon('doc', 21);
+  document.getElementById('ico-btn-check').innerHTML      = icon('check', 16, 2);
+  document.getElementById('ico-download').innerHTML       = icon('download', 16, 2);
+
+  // Render inicial
+  renderInfoEscolar();
+  renderCatalogo();
+  renderCarga();
+
+  // Navegación
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sec = btn.getAttribute('data-section');
+      goSection(sec);
+      if (sec === 'sec-carga')     renderCarga();
+      if (sec === 'sec-seleccion') renderCatalogo();
+      if (sec === 'sec-info')      renderInfoEscolar();
+    });
+  });
+
+  // Confirmar inscripción
+  document.getElementById('btn-confirmar').addEventListener('click', () => {
+    const cred = creditosInscritos();
+    // TODO: POST /api/alumno/carga con { grupos: Object.entries(inscritas) }
+    showToast('Actividad completada', `Inscripción confirmada: ${Object.keys(inscritas).length} materias, ${cred} créditos.`, 'ok');
+    goSection('sec-carga');
+    renderCarga();
+  });
+
+  // Descargar horario
+  document.getElementById('btn-descargar').addEventListener('click', () => {
+    showToast('Descargando', 'Tu horario se está preparando…', 'info');
+  });
+
+  // Cerrar sesión
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    sessionStorage.removeItem('usuario');
+    window.location.href = '../../index.html';
+  });
+});
+</script>
+</body>
+</html>
