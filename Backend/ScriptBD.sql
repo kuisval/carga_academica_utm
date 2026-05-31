@@ -337,3 +337,107 @@ GO
 INSERT INTO docente (id_docente, especialidad)
 VALUES (3, 'Bases de Datos');
 GO
+
+
+-- =============================================================
+--  DATOS DE PRUEBA — Carga Académica UTM
+--  Alumno: Juan Pérez García (id=1, semestre 3, regular, vigente)
+--  Carrera: ISC (id=1)
+--  Coordinador: M.C. Dinorah Meza García (id=2)
+--  Docente: Dr. Tomás Aguilar Vega (id=3)
+-- =============================================================
+
+USE carga_academica_utm;
+GO
+ 
+-- =============================================================
+--  1. MATERIAS de 3er semestre — ISC
+-- =============================================================
+INSERT INTO materia (clave, nombre, creditos, id_carrera) VALUES
+('ISC301', 'Estructura de Datos',          8, 1),
+('ISC302', 'Bases de Datos',               8, 1),
+('ISC303', 'Matemáticas Discretas',        6, 1),
+('ISC304', 'Programación Orientada a Obj', 8, 1),
+('ISC305', 'Sistemas Operativos',          6, 1),
+('ISC306', 'Inglés III',                   4, 1),
+('ISC307', 'Cálculo Diferencial',          6, 1);
+GO
+ 
+-- =============================================================
+--  2. AULAS
+-- =============================================================
+INSERT INTO aula (numero, edificio, capacidad) VALUES
+(101, 'A', 30),
+(102, 'A', 30),
+(201, 'B', 25),
+(202, 'B', 25),
+(301, 'C', 20);
+GO
+ 
+-- =============================================================
+--  3. HORARIOS
+--     Lunes-Miércoles-Viernes y Martes-Jueves
+-- =============================================================
+INSERT INTO horario (dias, hora_inicio, hora_fin) VALUES
+('Lunes-Miércoles-Viernes', '07:00', '08:30'),   -- id 1
+('Lunes-Miércoles-Viernes', '08:30', '10:00'),   -- id 2
+('Lunes-Miércoles-Viernes', '10:00', '11:30'),   -- id 3
+('Lunes-Miércoles-Viernes', '11:30', '13:00'),   -- id 4
+('Martes-Jueves',           '07:00', '09:00'),   -- id 5
+('Martes-Jueves',           '09:00', '11:00'),   -- id 6
+('Martes-Jueves',           '11:00', '13:00'),   -- id 7
+('Martes-Jueves',           '13:00', '15:00');   -- id 8
+GO
+ 
+-- =============================================================
+--  4. OFERTA ACADÉMICA — publicada para el periodo 2025-A
+-- =============================================================
+INSERT INTO oferta_academica (periodo, estado, id_carrera, id_coordinador)
+VALUES ('2025-A', 'publicada', 1, 2);
+GO
+-- id_oferta = 1
+ 
+-- =============================================================
+--  5. GRUPOS
+--     Restricciones a respetar:
+--       · uk_aula_horario    (id_aula, id_horario) únicos
+--       · uk_docente_horario (id_docente, id_horario) únicos
+--     El docente Tomás (id=3) solo puede estar en un horario a la vez,
+--     por eso cada grupo tiene un horario diferente.
+--     cupo_max=25, cupo_disponible=25 al inicio.
+-- =============================================================
+INSERT INTO grupo (clave, cupo_max, cupo_disponible, estado, id_materia, id_docente, id_aula, id_horario, id_oferta)
+VALUES
+--  Materia               Materia  Docente  Aula  Horario  Oferta
+('ED-A',   25, 25, 'disponible', 1, 3, 1, 1, 1),   -- Estructura de Datos     · LMV 07-08:30  · Aula A101
+('BD-A',   25, 25, 'disponible', 2, 3, 2, 2, 1),   -- Bases de Datos          · LMV 08:30-10  · Aula A102
+('MD-A',   25, 25, 'disponible', 3, 3, 3, 3, 1),   -- Matemáticas Discretas   · LMV 10-11:30  · Aula B201
+('POO-A',  25, 25, 'disponible', 4, 3, 4, 4, 1),   -- Programación OO         · LMV 11:30-13  · Aula B202
+('SO-A',   25, 25, 'disponible', 5, 3, 5, 5, 1),   -- Sistemas Operativos     · MJ  07-09     · Aula C301
+('ING-A',  25, 25, 'disponible', 6, 3, 1, 6, 1),   -- Inglés III              · MJ  09-11     · Aula A101
+('CALC-A', 25, 25, 'disponible', 7, 3, 2, 7, 1);   -- Cálculo Diferencial     · MJ  11-13     · Aula A102
+GO
+ 
+-- =============================================================
+--  VERIFICACIÓN — muestra lo que quedó disponible para Juan
+-- =============================================================
+SELECT
+    g.clave              AS grupo,
+    m.nombre             AS materia,
+    m.creditos,
+    h.dias,
+    CONVERT(VARCHAR(5), h.hora_inicio) AS inicio,
+    CONVERT(VARCHAR(5), h.hora_fin)    AS fin,
+    a.numero             AS aula,
+    a.edificio,
+    g.cupo_disponible
+FROM grupo g
+JOIN materia          m  ON g.id_materia = m.id_materia
+JOIN horario          h  ON g.id_horario = h.id_horario
+JOIN aula             a  ON g.id_aula    = a.id_aula
+JOIN oferta_academica oa ON g.id_oferta  = oa.id_oferta
+WHERE oa.periodo = '2025-A'
+  AND oa.estado  = 'publicada'
+  AND g.estado   = 'disponible'
+ORDER BY h.hora_inicio;
+GO
