@@ -6,6 +6,23 @@
 // API_URL se define en app.js (cargado antes que este script)
 // para configurarla sin tocar el código: window.APP_CONFIG = { API_URL: '...' }
 
+// ── Redirección automática si ya hay sesión activa ───
+(function () {
+  try {
+    const session = sessionStorage.getItem('usuario');
+    if (!session) return;
+    const usuario = JSON.parse(session);
+    if (!usuario?.rol) return;
+    switch (usuario.rol) {
+      case 'alumno':       window.location.replace('pages/alumno/carga.html');        break;
+      case 'coordinador':  window.location.replace('pages/coordinador/grupos.html');  break;
+      case 'docente':      window.location.replace('pages/docente/horario.html');     break;
+    }
+  } catch {
+    sessionStorage.removeItem('usuario');
+  }
+})();
+
 const form      = document.getElementById('loginForm');
 const btnLogin  = document.getElementById('btnLogin');
 const btnText   = document.getElementById('btnText');
@@ -14,13 +31,12 @@ const errBox    = document.getElementById('loginError');
 const errMsg    = document.getElementById('loginErrorMsg');
 
 function setLoading(on) {
-  btnLogin.disabled = on;
+  btnLogin.disabled   = on;
   btnText.textContent = on ? 'Verificando...' : 'Ingresar';
   btnLoader.classList.toggle('hidden', !on);
 }
 
 function showError(msg) {
-  // errIco ya tiene el SVG pre-renderizado en index.html
   errMsg.textContent = msg;
   errBox.classList.remove('hidden');
   document.getElementById('email').classList.add('field__input--error');
