@@ -3,6 +3,33 @@
 //  Íconos SVG, Toast, WeekGrid, Auth check
 // =====================================================
 
+/* ---------- Configuración ---------- */
+/**
+ * URL base del API.
+ * En desarrollo apunta a localhost; para producción se puede inyectar
+ * window.APP_CONFIG = { API_URL: 'https://mi-servidor.com' } antes de cargar app.js,
+ * o bien usar cadena vacía '' para rutas relativas al mismo host.
+ */
+const API_URL =
+  (window.APP_CONFIG && window.APP_CONFIG.API_URL) ||
+  'http://localhost:3000';
+
+/* ---------- Sanitización XSS ---------- */
+/**
+ * Escapa caracteres HTML especiales para evitar XSS
+ * al inyectar datos del API en innerHTML.
+ * @param {*} s - valor a escapar
+ * @returns {string}
+ */
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#039;');
+}
+
 /* ---------- Íconos ---------- */
 const ICONS = {
   addbook:  'M5 4.5A1.5 1.5 0 0 1 6.5 3H13v7l-2.2-1.4L8.6 10V3M14 13H6.5A1.5 1.5 0 0 0 5 14.5V19.5A1.5 1.5 0 0 0 6.5 21H14M18 13v8M14 17h8',
@@ -86,11 +113,12 @@ function showToast(title, body = '', kind = 'info') {
 
   const el = document.createElement('div');
   el.className = 'toast';
+  // title y body se escapan porque pueden venir de mensajes del API
   el.innerHTML = `
     <div class="toast__icon" style="color:${color}">${icon(iconName, 19, 2.2)}</div>
     <div class="toast__body">
-      <div class="toast__title">${title}</div>
-      ${body ? `<div class="toast__desc">${body}</div>` : ''}
+      <div class="toast__title">${escapeHtml(title)}</div>
+      ${body ? `<div class="toast__desc">${escapeHtml(body)}</div>` : ''}
     </div>
     <button class="toast__close" aria-label="Cerrar">${icon('x', 17)}</button>
   `;
@@ -105,11 +133,37 @@ const DIAS_SEM = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
 
 /**
  * Renderiza el horario semanal dentro de un contenedor.
+ *
+ * Nota: el grid trabaja con filas de hora entera (una fila = 60 min).
+ * Si ini/fin llegan como número decimal (7.5 = 7:30) o cadena "HH:MM",
+ * se normalizan: ini → floor a hora entera, fin → ceil a hora entera.
+ * Para soportar slots de 30 min habría que cambiar la unidad del grid.
+ *
  * @param {HTMLElement} container - el div donde se inyecta
  * @param {Array} clases - [{ dias:[], ini:7, fin:9, label:'', sub:'', color:'' }]
+ *   ini/fin pueden ser entero, decimal o string "HH:MM"
  * @param {object} opts  - { h0:7, h1:15, rowH:58 }
  */
 function renderWeekGrid(container, clases, { h0 = 7, h1 = 15, rowH = 58 } = {}) {
+
+  // --- Normalización centralizada de ini/fin a horas enteras ---
+  function toHourFloat(v) {
+    if (v == null) return null;
+    if (typeof v === 'string') {
+      const [hStr, mStr = '0'] = v.split(':');
+      const h = Number(hStr), m = Number(mStr);
+      return Number.isFinite(h) && Number.isFinite(m) ? h + m / 60 : null;
+    }
+    return Number.isFinite(v) ? v : null;
+  }
+  clases = (clases || []).map(cls => {
+    if (!cls) return cls;
+    const iniH = toHourFloat(cls.ini);
+    const finH = toHourFloat(cls.fin);
+    if (iniH == null || finH == null) return cls; // no parseable → dejar como está
+    return { ...cls, ini: Math.floor(iniH), fin: Math.ceil(finH) };
+  });
+
   const hours = [];
   for (let h = h0; h < h1; h++) hours.push(h);
   const fmt = n => String(n).padStart(2, '0') + ':00';
@@ -119,22 +173,22 @@ function renderWeekGrid(container, clases, { h0 = 7, h1 = 15, rowH = 58 } = {}) 
   // Encabezado: esquina + días
   html += `<div class="week-grid__corner"></div>`;
   DIAS_SEM.forEach(d => {
-    html += `<div class="week-grid__day">${d}</div>`;
+    html += `<div class="week-grid__day">${escapeHtml(d)}</div>`;
   });
 
-  // Filas de horas
+  // Filas de horas — label y sub escapados (pueden venir del API)
   hours.forEach(h => {
     html += `<div class="week-grid__time">${fmt(h)}</div>`;
     DIAS_SEM.forEach(d => {
       const cls = clases.find(c => c.dias.includes(d) && c.ini === h);
       if (cls) {
-        const span  = cls.fin - cls.ini;
+        const span   = cls.fin - cls.ini;
         const height = span * rowH - 8;
-        const bg    = cls.color || 'var(--tinto-700)';
+        const bg     = cls.color || 'var(--tinto-700)';
         html += `<div class="week-grid__slot">
-          <div class="week-grid__event" style="height:${height}px;background:${bg};">
-            <div class="week-grid__event-label">${cls.label}</div>
-            <div class="week-grid__event-sub">${cls.sub}</div>
+          <div class="week-grid__event" style="height:${height}px;background:${escapeHtml(bg)};">
+            <div class="week-grid__event-label">${escapeHtml(cls.label)}</div>
+            <div class="week-grid__event-sub">${escapeHtml(cls.sub)}</div>
           </div>
         </div>`;
       } else {

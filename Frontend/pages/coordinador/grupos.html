@@ -231,22 +231,28 @@ function renderGrupos() {
   const cont = document.getElementById('grupos-list');
   cont.innerHTML = grupos.map(g => {
     const [bklass, blabel] = ESTADO_BADGE[g.estado] || ['badge--gray','—'];
-    return `<div class="list-item list-item--clickable" onclick="editarGrupo(${g.id})">
-      <span class="clave">${g.clave}</span>
+    return `<div class="list-item list-item--clickable" data-action="editar" data-id="${g.id}">
+      <span class="clave">${escapeHtml(g.clave)}</span>
       <div class="list-item__body">
-        <div class="list-item__title">${g.materia}</div>
+        <div class="list-item__title">${escapeHtml(g.materia)}</div>
         <div class="list-item__meta">
-          <span class="list-item__meta-item">${icon('user',13)} ${g.docente}</span>
-          <span class="list-item__meta-item">${icon('pin',13)} ${g.aula}</span>
-          <span class="list-item__meta-item">${icon('clock',13)} ${g.horario}</span>
+          <span class="list-item__meta-item">${icon('user',13)} ${escapeHtml(g.docente)}</span>
+          <span class="list-item__meta-item">${icon('pin',13)} ${escapeHtml(g.aula)}</span>
+          <span class="list-item__meta-item">${icon('clock',13)} ${escapeHtml(g.horario)}</span>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        <span class="badge ${bklass}">${blabel}</span>
+        <span class="badge ${bklass}">${escapeHtml(blabel)}</span>
         <span style="font-size:12px;color:var(--muted);font-weight:600;">${g.cupoOcup} / ${g.cupoMax}</span>
       </div>
     </div>`;
   }).join('');
+
+  // Event delegation — reemplaza onclick inline en cada card
+  cont.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action="editar"]');
+    if (el) editarGrupo(Number(el.dataset.id));
+  });
 }
 
 // ===================================================
@@ -279,14 +285,14 @@ function renderOferta() {
       const lleno = gr.ocupado >= gr.cupo;
       return `<div class="oferta-table__row">
         <div style="display:flex;align-items:center;gap:12px;">
-          ${gi === 0 ? `<span class="clave">${m.clave}</span>` : `<span style="width:64px;"></span>`}
+          ${gi === 0 ? `<span class="clave">${escapeHtml(m.clave)}</span>` : `<span style="width:64px;"></span>`}
           <div>
-            ${gi === 0 ? `<div style="font-weight:700;font-size:15px;">${m.nombre}</div><div style="font-size:12.5px;color:var(--muted);font-weight:500;">${m.creditos} créd · ${m.tipo}</div>` : ''}
+            ${gi === 0 ? `<div style="font-weight:700;font-size:15px;">${escapeHtml(m.nombre)}</div><div style="font-size:12.5px;color:var(--muted);font-weight:500;">${m.creditos} créd · ${escapeHtml(m.tipo)}</div>` : ''}
           </div>
         </div>
-        <span style="font-weight:700;font-size:14px;color:var(--ink-2);">Grupo ${gr.g}</span>
-        <span style="font-size:14px;color:var(--ink-2);">${gr.docente}</span>
-        <span style="font-size:13.5px;color:var(--ink-2);">${gr.horario}</span>
+        <span style="font-weight:700;font-size:14px;color:var(--ink-2);">Grupo ${escapeHtml(gr.g)}</span>
+        <span style="font-size:14px;color:var(--ink-2);">${escapeHtml(gr.docente)}</span>
+        <span style="font-size:13.5px;color:var(--ink-2);">${escapeHtml(gr.horario)}</span>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:14px;font-weight:700;color:${lleno ? 'var(--red)' : 'var(--ink)'};">${gr.ocupado}/${gr.cupo}</span>
           ${lleno ? `<span class="badge badge--warn">Lleno</span>` : ''}

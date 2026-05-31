@@ -3,7 +3,8 @@
 //  POST /api/auth/login → { rol, id, nombre }
 // =====================================================
 
-const API_URL = 'http://localhost:3000';
+// API_URL se define en app.js (cargado antes que este script)
+// para configurarla sin tocar el código: window.APP_CONFIG = { API_URL: '...' }
 
 const form      = document.getElementById('loginForm');
 const btnLogin  = document.getElementById('btnLogin');
@@ -20,7 +21,7 @@ function setLoading(on) {
 }
 
 function showError(msg) {
-  errIco.innerHTML = icon('alert', 16, 2);
+  // errIco ya tiene el SVG pre-renderizado en index.html — no se toca el DOM aquí
   errMsg.textContent = msg;
   errBox.classList.remove('hidden');
   document.getElementById('matricula').classList.add('field__input--error');

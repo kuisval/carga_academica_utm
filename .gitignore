@@ -1,0 +1,17 @@
+# Dependencias de Node
+node_modules/
+npm-debug.log*
+
+# Variables de entorno (contienen credenciales)
+.env
+.env.*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.suo
+*.user

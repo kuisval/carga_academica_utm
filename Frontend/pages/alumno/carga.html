@@ -295,7 +295,7 @@ function renderCatalogo() {
   document.getElementById('sel-status-badge').innerHTML = `${icon('clock',14)} Inscripciones abiertas`;
   document.getElementById('btn-confirmar').disabled    = Object.keys(inscritas).length === 0;
 
-  // Catálogo
+  // Catálogo — datos escapados + data-* en lugar de onclick inline
   const cont = document.getElementById('catalogo-container');
   cont.innerHTML = OFERTA.map(m => {
     const grupos = m.grupos.map(gr => {
@@ -303,20 +303,30 @@ function renderCatalogo() {
       const lleno   = gr.ocupado >= gr.cupo;
       const empalme = !on && tieneEmpalme(m.clave, gr.g);
       const pct     = Math.round(gr.ocupado / gr.cupo * 100);
-
+      // data-* escapa el valor automáticamente; nunca se ejecuta como código
       let btnHtml;
-      if (on)       btnHtml = `<button class="btn btn--ghost" style="padding:10px 14px;" onclick="toggleGrupo('${m.clave}','${gr.g}')">${icon('check',16,2)} Inscrito</button>`;
-      else if (lleno) btnHtml = `<button class="btn btn--default" style="padding:10px 14px;" disabled>Lleno</button>`;
-      else if (empalme) btnHtml = `<button class="btn btn--danger" style="padding:10px 14px;" onclick="alertEmpalme('${m.clave}')">${icon('alert',15,2)} Empalme</button>`;
-      else          btnHtml = `<button class="btn btn--primary" style="padding:10px 14px;" onclick="toggleGrupo('${m.clave}','${gr.g}')">${icon('plus',16,2)} Agregar</button>`;
+      if (on)
+        btnHtml = `<button class="btn btn--ghost btn-toggle" style="padding:10px 14px;"
+                     data-clave="${escapeHtml(m.clave)}" data-g="${escapeHtml(gr.g)}"
+                     data-action="toggle">${icon('check',16,2)} Inscrito</button>`;
+      else if (lleno)
+        btnHtml = `<button class="btn btn--default" style="padding:10px 14px;" disabled>Lleno</button>`;
+      else if (empalme)
+        btnHtml = `<button class="btn btn--danger btn-toggle" style="padding:10px 14px;"
+                     data-clave="${escapeHtml(m.clave)}" data-g="${escapeHtml(gr.g)}"
+                     data-action="empalme">${icon('alert',15,2)} Empalme</button>`;
+      else
+        btnHtml = `<button class="btn btn--primary btn-toggle" style="padding:10px 14px;"
+                     data-clave="${escapeHtml(m.clave)}" data-g="${escapeHtml(gr.g)}"
+                     data-action="toggle">${icon('plus',16,2)} Agregar</button>`;
 
       return `<div class="grupo-row ${on ? 'selected' : ''}">
-        <span class="grupo-row__name">Grupo ${gr.g}</span>
+        <span class="grupo-row__name">Grupo ${escapeHtml(gr.g)}</span>
         <div class="grupo-row__info">
-          <div class="grupo-row__docente">${gr.docente}</div>
+          <div class="grupo-row__docente">${escapeHtml(gr.docente)}</div>
           <div class="grupo-row__meta">
-            <span>${icon('clock',13)} ${fmtHorario(gr.horario)}</span>
-            <span>${icon('pin',13)} ${gr.aula}</span>
+            <span>${icon('clock',13)} ${escapeHtml(fmtHorario(gr.horario))}</span>
+            <span>${icon('pin',13)} ${escapeHtml(gr.aula)}</span>
           </div>
         </div>
         <div class="grupo-row__cupo">
@@ -329,40 +339,55 @@ function renderCatalogo() {
 
     return `<div class="card materia-card">
       <div class="materia-card__header">
-        <span class="clave">${m.clave}</span>
+        <span class="clave">${escapeHtml(m.clave)}</span>
         <div class="flex-1">
-          <div class="materia-card__name">${m.nombre}</div>
-          <div class="materia-card__sub">${m.creditos} créditos · ${m.cuatri}</div>
+          <div class="materia-card__name">${escapeHtml(m.nombre)}</div>
+          <div class="materia-card__sub">${m.creditos} créditos · ${escapeHtml(m.cuatri)}</div>
         </div>
-        <span class="badge ${m.tipo === 'Optativa' ? 'badge--gray' : 'badge--tinto'}">${m.tipo}</span>
+        <span class="badge ${m.tipo === 'Optativa' ? 'badge--gray' : 'badge--tinto'}">${escapeHtml(m.tipo)}</span>
       </div>
       <div class="materia-card__grupos">${grupos}</div>
     </div>`;
   }).join('');
+
+  // Event delegation en el catálogo (reemplaza todos los onclick inline)
+  cont.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const { clave, g, action } = btn.dataset;
+    if (action === 'toggle')  toggleGrupo(clave, g);
+    if (action === 'empalme') showToast('Empalme de horario', `${escapeHtml(clave)} se traslapa con otra materia.`, 'bad');
+  }, { once: false });
 
   // Panel lateral de selección
   renderSelPanel();
 }
 
 function renderSelPanel() {
-  const sel = Object.entries(inscritas);
+  const sel  = Object.entries(inscritas);
   const list = document.getElementById('sel-list');
 
   if (sel.length === 0) {
     list.innerHTML = `<div class="sel-panel__empty">Aún no has seleccionado materias.<br>Agrégalas desde el catálogo.</div>`;
   } else {
     list.innerHTML = sel.map(([clave, g]) => {
-      const m = materiaPorClave(clave);
+      const m  = materiaPorClave(clave);
       const gr = m.grupos.find(x => x.g === g);
       return `<div class="sel-item">
-        <span class="sel-item__dot" style="background:${colorByClave(clave)};"></span>
+        <span class="sel-item__dot" style="background:${escapeHtml(colorByClave(clave))};"></span>
         <div class="sel-item__info">
-          <div class="sel-item__name">${m.nombre}</div>
-          <div class="sel-item__sub">${clave} · Grupo ${g} · ${fmtHorario(gr.horario)}</div>
+          <div class="sel-item__name">${escapeHtml(m.nombre)}</div>
+          <div class="sel-item__sub">${escapeHtml(clave)} · Grupo ${escapeHtml(g)} · ${escapeHtml(fmtHorario(gr.horario))}</div>
         </div>
-        <button class="sel-item__remove" onclick="quitarMateria('${clave}')" title="Quitar">${icon('x',15)}</button>
+        <button class="sel-item__remove" data-action="quitar" data-clave="${escapeHtml(clave)}" title="Quitar">${icon('x',15)}</button>
       </div>`;
     }).join('');
+
+    // Event delegation en el panel de selección
+    list.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="quitar"]');
+      if (btn) quitarMateria(btn.dataset.clave);
+    });
   }
 }
 
@@ -392,12 +417,12 @@ function renderCarga() {
       const m  = materiaPorClave(clave);
       const gr = m.grupos.find(x => x.g === g);
       return `<div class="list-item">
-        <span class="clave">${clave}</span>
+        <span class="clave">${escapeHtml(clave)}</span>
         <div class="list-item__body">
-          <div class="list-item__title">${m.nombre}</div>
+          <div class="list-item__title">${escapeHtml(m.nombre)}</div>
           <div class="list-item__meta">
-            <span class="list-item__meta-item">${icon('user',13)} ${gr.docente}</span>
-            <span class="list-item__meta-item">${icon('pin',13)} ${gr.aula}</span>
+            <span class="list-item__meta-item">${icon('user',13)} ${escapeHtml(gr.docente)}</span>
+            <span class="list-item__meta-item">${icon('pin',13)} ${escapeHtml(gr.aula)}</span>
           </div>
         </div>
         <span style="font-size:13px;font-weight:700;color:var(--tinto-700);">${m.creditos} créd.</span>

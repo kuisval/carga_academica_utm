@@ -144,15 +144,15 @@ function renderHorario() {
   // Lista de grupos
   document.getElementById('horario-list').innerHTML = HORARIO.map(g => `
     <div class="list-item">
-      <span class="clave">${g.clave}</span>
+      <span class="clave">${escapeHtml(g.clave)}</span>
       <div class="list-item__body">
-        <div class="list-item__title">${g.materia}</div>
+        <div class="list-item__title">${escapeHtml(g.materia)}</div>
         <div class="list-item__meta">
-          <span class="list-item__meta-item">${icon('clock',13)} ${fmtHorario(g.horario)}</span>
+          <span class="list-item__meta-item">${icon('clock',13)} ${escapeHtml(fmtHorario(g.horario))}</span>
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:13px;font-weight:700;color:var(--ink);">${g.aula}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">${escapeHtml(g.aula)}</div>
         <div style="font-size:12px;color:var(--muted);font-weight:600;">${g.alumnos} alumnos</div>
       </div>
     </div>

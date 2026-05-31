@@ -60,9 +60,14 @@
             />
           </label>
 
-          <!-- Error inline -->
+          <!-- Error inline — ícono pre-renderizado para evitar innerHTML en JS -->
           <div id="loginError" class="inline-error hidden">
-            <span id="loginErrorIcon" style="flex-shrink:0;margin-top:1px;"></span>
+            <span id="loginErrorIcon" style="flex-shrink:0;margin-top:1px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 9v4m0 4h.01M10.3 4 3 17a2 2 0 0 0 1.7 3h14.6a2 2 0 0 0 1.7-3L13.7 4a2 2 0 0 0-3.4 0"/>
+              </svg>
+            </span>
             <span id="loginErrorMsg"></span>
           </div>
 
