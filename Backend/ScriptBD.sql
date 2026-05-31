@@ -479,3 +479,49 @@ SELECT id_horario, dias,
 FROM horario
 ORDER BY id_horario;
 GO
+
+-- =============================================================
+--  DATOS DE PRUEBA — Coordinador
+--  El ScriptBD.sql ya insertó:
+--    id=2 · M.C. Dinorah Meza García · coordinador
+--    coordinador(id_coordinador=2, id_carrera=1)
+--  Solo necesitamos verificar que exista y hacer login con:
+--    Email:    dinorah.meza@utm.edu.mx
+--    Password: utm2025
+-- =============================================================
+
+USE carga_academica_utm;
+GO
+
+-- ── Verificación rápida ───────────────────────────────────
+SELECT
+  u.id_usuario,
+  u.nombre,
+  u.email,
+  u.tipo,
+  c.nombre  AS carrera
+FROM usuario     u
+JOIN coordinador co ON co.id_coordinador = u.id_usuario
+JOIN carrera     c  ON c.id_carrera      = co.id_carrera
+WHERE u.tipo = 'coordinador';
+GO
+
+-- Si la consulta anterior no devuelve filas, ejecuta esto:
+-- (solo si el ScriptBD.sql no se corrió completo)
+
+/*
+INSERT INTO usuario (email, password, nombre, tipo)
+VALUES ('dinorah.meza@utm.edu.mx', 'utm2025', 'M.C. Dinorah Meza García', 'coordinador');
+GO
+
+-- Obtén el id que se generó
+DECLARE @id INT = SCOPE_IDENTITY();
+
+INSERT INTO coordinador (id_coordinador, id_carrera)
+VALUES (@id, 1);
+GO
+*/
+
+UPDATE oferta_academica
+SET estado = 'borrador'
+WHERE id_oferta = 1;
