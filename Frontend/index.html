@@ -3,75 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login – Sistema de Carga Académica UTM</title>
+  <title>Inicio de Sesión — UTM Carga Académica</title>
   <link rel="stylesheet" href="css/estilos.css" />
 </head>
 <body>
 
-  <div class="page-wrapper">
+<div class="login-page">
 
-    <!-- HEADER -->
-    <header class="header">
-      <div class="header-inner">
-        <span class="header-logo">UTM</span>
-        <span class="header-title">Sistema de Carga Académica</span>
-      </div>
-    </header>
+  <!-- ═══ Panel izquierdo — Marca ═══ -->
+  <div class="brand-panel">
+    <img src="assets/utm-icon-white.png" class="brand-panel__bg-icon" aria-hidden="true" />
+    <div class="brand-panel__content">
+      <img src="assets/utm-icon-white.png" class="brand-panel__logo" alt="UTM" />
+      <div class="brand-panel__utm">UTM</div>
+      <div class="brand-panel__subtitle">Sistema de Carga Académica Digital</div>
+      <p class="brand-panel__desc">
+        Inscríbete a tus materias, consulta tu horario y gestiona la oferta académica del periodo desde un solo lugar.
+      </p>
+    </div>
+    <div class="greca brand-panel__greca"></div>
+  </div>
 
-    <!-- MAIN -->
-    <main class="main">
-      <div class="card">
-        <h1 class="card-title">Inicio de Sesión</h1>
+  <!-- ═══ Panel derecho — Formulario ═══ -->
+  <div class="form-panel">
+    <img src="assets/utm-icon.png" class="form-panel__bg-icon" aria-hidden="true" />
 
-        <form id="loginForm" novalidate>
+    <div class="form-panel__inner">
+      <h1 class="form-title">Inicio de sesión</h1>
+      <p class="form-subtitle">Ingresa con la cuenta que te proporcionó la institución.</p>
 
-          <div class="form-group">
-            <label for="matricula">Matrícula</label>
+      <form id="loginForm" novalidate>
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+          <label class="field">
+            <span class="field__label">Matrícula</span>
             <input
-              type="text"
+              class="field__input"
               id="matricula"
-              name="matricula"
-              placeholder="Ej. 2021001234"
+              type="text"
+              placeholder="Ej. 22170842"
               autocomplete="username"
+              inputmode="numeric"
               required
             />
-            <span class="field-error" id="err-matricula"></span>
-          </div>
+          </label>
 
-          <div class="form-group">
-            <label for="password">Contraseña</label>
+          <label class="field">
+            <span class="field__label">Contraseña</span>
             <input
-              type="password"
+              class="field__input"
               id="password"
-              name="password"
-              placeholder="Contraseña"
+              type="password"
+              placeholder="••••••••"
               autocomplete="current-password"
               required
             />
-            <span class="field-error" id="err-password"></span>
+          </label>
+
+          <!-- Error inline -->
+          <div id="loginError" class="inline-error hidden">
+            <span id="loginErrorIcon" style="flex-shrink:0;margin-top:1px;"></span>
+            <span id="loginErrorMsg"></span>
           </div>
 
-          <span class="form-error" id="err-global"></span>
-
-          <button type="submit" class="btn-submit" id="btnLogin">
-            <span id="btnText">Entrar</span>
+          <button type="submit" class="btn btn--primary btn--full btn--lg" id="btnLogin">
+            <span id="btnText">Ingresar</span>
             <span id="btnLoader" class="loader hidden"></span>
           </button>
 
-        </form>
-      </div>
-    </main>
+        </div>
+      </form>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-      <p>© Copyright 2025 <strong>UTM</strong> – Todos los Derechos Reservados</p>
-    </footer>
-
-    <!-- BARRA DECORATIVA -->
-    <div class="footer-bar"></div>
-
+      <p style="font-size:12.5px; color:var(--tinto-600); line-height:1.6; margin-top:28px; font-weight:600;">
+        Si tienes problemas para acceder, contacta a la Dirección de Desarrollo Académico.
+      </p>
+    </div>
   </div>
 
-  <script src="js/main.js"></script>
+</div><!-- /login-page -->
+
+<script src="js/app.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
