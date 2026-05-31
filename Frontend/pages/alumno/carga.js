@@ -315,12 +315,17 @@ function renderCarga() {
         <div class="list-item__body">
           <div class="list-item__title">${escapeHtml(mat?.nombre || '—')}</div>
           <div class="list-item__meta">
-            <span class="list-item__meta-item">${icon('user', 13)} ${escapeHtml(gr.docente)}</span>
-            <span class="list-item__meta-item">${icon('pin', 13)} ${escapeHtml(gr.aula)}</span>
+            <span class="list-item__meta-item">${icon('user',  13)} ${escapeHtml(gr.docente)}</span>
+            <span class="list-item__meta-item">${icon('pin',   13)} ${escapeHtml(gr.aula)}</span>
             <span class="list-item__meta-item">${icon('clock', 13)} ${escapeHtml(fmtHorario(gr))}</span>
           </div>
         </div>
         <span style="font-size:13px;font-weight:700;color:var(--tinto-700);">${mat?.creditos || 0} créd.</span>
+        <button class="btn btn--danger" style="padding:7px 12px;font-size:12px;margin-left:8px;"
+          data-action="baja" data-id-grupo="${gr.id_grupo}" data-id-mat="${id_mat}"
+          title="Dar de baja">
+          ${icon('x', 13)} Baja
+        </button>
       </div>`;
     }).join('');
   }
@@ -433,6 +438,35 @@ function quitarMateria(id_materia) {
   renderHorario();
 }
 
+async function bajaMateria(id_materia, id_grupo) {
+  if (!confirm('¿Seguro que deseas dar de baja esta materia?')) return;
+
+  try {
+    const res  = await fetch(`${API_URL}/api/alumno/carga`, {
+      method:  'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id_alumno: usuario.id, id_grupo, periodo: PERIODO })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast('Error', data.error || 'No se pudo dar de baja la materia.', 'bad');
+      return;
+    }
+
+    showToast('Baja exitosa', data.mensaje, 'ok');
+    delete inscritas[id_materia];
+    gruposEnDB = gruposEnDB.filter(id => id !== id_grupo);
+    renderCatalogo();
+    renderCarga();
+    renderHorario();
+
+  } catch (err) {
+    console.error('bajaMateria:', err);
+    showToast('Error de conexión', 'No se pudo conectar con el servidor.', 'bad');
+  }
+}
+
 // =====================================================
 //  CONFIRMAR INSCRIPCIÓN → POST /api/alumno/carga
 // =====================================================
@@ -540,6 +574,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('sel-list').addEventListener('click', e => {
     const btn = e.target.closest('[data-action="quitar"]');
     if (btn) quitarMateria(Number(btn.dataset.idMat));
+  });
+
+  // Baja de materia — event delegation en la lista de carga
+  document.getElementById('carga-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="baja"]');
+    if (btn) bajaMateria(Number(btn.dataset.idMat), Number(btn.dataset.idGrupo));
   });
 
   // Link vacío → ir a selección
