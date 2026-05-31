@@ -12,7 +12,6 @@ const btnText   = document.getElementById('btnText');
 const btnLoader = document.getElementById('btnLoader');
 const errBox    = document.getElementById('loginError');
 const errMsg    = document.getElementById('loginErrorMsg');
-const errIco    = document.getElementById('loginErrorIcon');
 
 function setLoading(on) {
   btnLogin.disabled = on;
@@ -21,17 +20,17 @@ function setLoading(on) {
 }
 
 function showError(msg) {
-  // errIco ya tiene el SVG pre-renderizado en index.html — no se toca el DOM aquí
+  // errIco ya tiene el SVG pre-renderizado en index.html
   errMsg.textContent = msg;
   errBox.classList.remove('hidden');
-  document.getElementById('matricula').classList.add('field__input--error');
+  document.getElementById('email').classList.add('field__input--error');
   document.getElementById('password').classList.add('field__input--error');
 }
 
 function clearError() {
   errBox.classList.add('hidden');
   errMsg.textContent = '';
-  document.getElementById('matricula').classList.remove('field__input--error');
+  document.getElementById('email').classList.remove('field__input--error');
   document.getElementById('password').classList.remove('field__input--error');
 }
 
@@ -39,12 +38,11 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearError();
 
-  const matricula = document.getElementById('matricula').value.trim();
-  const password  = document.getElementById('password').value;
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
 
-  // Validación local
-  if (!matricula || !password) {
-    showError('Ingresa tu matrícula y contraseña para continuar.');
+  if (!email || !password) {
+    showError('Ingresa tu correo y contraseña para continuar.');
     return;
   }
 
@@ -54,7 +52,7 @@ form.addEventListener('submit', async (e) => {
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ matricula, password }),
+      body:    JSON.stringify({ email, password }),
     });
 
     const data = await res.json();

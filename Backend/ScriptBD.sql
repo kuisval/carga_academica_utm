@@ -11,12 +11,12 @@ USE carga_academica_utm;
 GO
 
 -- =============================================================
---  LIMPIEZA (ejecutar si ya existe la BD para empezar limpio)
+--  LIMPIEZA (re-ejecutable limpio)
 -- =============================================================
-IF OBJECT_ID('trg_linea_carga_delete', 'TR') IS NOT NULL DROP TRIGGER trg_linea_carga_delete;
-IF OBJECT_ID('trg_linea_carga_insert', 'TR') IS NOT NULL DROP TRIGGER trg_linea_carga_insert;
-IF OBJECT_ID('vista_carga_alumno',     'V')  IS NOT NULL DROP VIEW vista_carga_alumno;
-IF OBJECT_ID('vista_grupos_disponibles','V') IS NOT NULL DROP VIEW vista_grupos_disponibles;
+IF OBJECT_ID('trg_linea_carga_delete',  'TR') IS NOT NULL DROP TRIGGER trg_linea_carga_delete;
+IF OBJECT_ID('trg_linea_carga_insert',  'TR') IS NOT NULL DROP TRIGGER trg_linea_carga_insert;
+IF OBJECT_ID('vista_carga_alumno',      'V')  IS NOT NULL DROP VIEW  vista_carga_alumno;
+IF OBJECT_ID('vista_grupos_disponibles','V')  IS NOT NULL DROP VIEW  vista_grupos_disponibles;
 IF OBJECT_ID('linea_carga',    'U') IS NOT NULL DROP TABLE linea_carga;
 IF OBJECT_ID('carga_academica','U') IS NOT NULL DROP TABLE carga_academica;
 IF OBJECT_ID('grupo',          'U') IS NOT NULL DROP TABLE grupo;
@@ -45,68 +45,62 @@ GO
 
 -- =============================================================
 --  2. USUARIO  ← supertabla de autenticación
+--     Login unificado por correo electrónico para todos los roles
 --     tipo: 'alumno' | 'coordinador' | 'docente'
---     clave: matrícula para alumno, número de empleado para los demás
 -- =============================================================
 CREATE TABLE usuario (
     id_usuario  INT          NOT NULL IDENTITY(1,1),
-    clave       VARCHAR(20)  NOT NULL,
+    email       VARCHAR(150) NOT NULL,
     password    VARCHAR(255) NOT NULL DEFAULT 'utm2025',
     nombre      VARCHAR(150) NOT NULL,
     tipo        VARCHAR(12)  NOT NULL,
     CONSTRAINT pk_usuario       PRIMARY KEY (id_usuario),
-    CONSTRAINT uk_usuario_clave UNIQUE (clave),
+    CONSTRAINT uk_usuario_email UNIQUE (email),
     CONSTRAINT chk_usuario_tipo CHECK (tipo IN ('alumno','coordinador','docente'))
 );
 GO
 
 -- =============================================================
---  3. ALUMNO  (subtabla — datos académicos propios del alumno)
---     tipo_alumno: 'regular' | 'irregular'
---     estado_pago: 'vigente' | 'adeudo'
---     id_alumno = id_usuario (misma PK, relación 1-1)
+--  3. ALUMNO  (subtabla)
+--     matricula: número de control — solo para identificación interna,
+--                el login se hace con el email de usuario
 -- =============================================================
 CREATE TABLE alumno (
     id_alumno   INT         NOT NULL,
+    matricula   VARCHAR(20) NOT NULL,
     semestre    TINYINT     NOT NULL,
     tipo_alumno VARCHAR(10) NOT NULL DEFAULT 'regular',
     estado_pago VARCHAR(10) NOT NULL DEFAULT 'adeudo',
     id_carrera  INT         NOT NULL,
     CONSTRAINT pk_alumno         PRIMARY KEY (id_alumno),
+    CONSTRAINT uk_alumno_mat     UNIQUE (matricula),
     CONSTRAINT chk_alumno_tipo   CHECK (tipo_alumno IN ('regular','irregular')),
     CONSTRAINT chk_alumno_pago   CHECK (estado_pago IN ('vigente','adeudo')),
-    CONSTRAINT fk_alumno_usuario FOREIGN KEY (id_alumno)
-        REFERENCES usuario(id_usuario),
-    CONSTRAINT fk_alumno_carrera FOREIGN KEY (id_carrera)
-        REFERENCES carrera(id_carrera)
+    CONSTRAINT fk_alumno_usuario FOREIGN KEY (id_alumno)  REFERENCES usuario(id_usuario),
+    CONSTRAINT fk_alumno_carrera FOREIGN KEY (id_carrera) REFERENCES carrera(id_carrera)
 );
 GO
 
 -- =============================================================
 --  4. COORDINADOR  (subtabla)
---     id_coordinador = id_usuario (relación 1-1)
 -- =============================================================
 CREATE TABLE coordinador (
     id_coordinador INT NOT NULL,
     id_carrera     INT NOT NULL,
-    CONSTRAINT pk_coordinador       PRIMARY KEY (id_coordinador),
-    CONSTRAINT fk_coord_usuario     FOREIGN KEY (id_coordinador)
-        REFERENCES usuario(id_usuario),
-    CONSTRAINT fk_coord_carrera     FOREIGN KEY (id_carrera)
-        REFERENCES carrera(id_carrera)
+    CONSTRAINT pk_coordinador    PRIMARY KEY (id_coordinador),
+    CONSTRAINT fk_coord_usuario  FOREIGN KEY (id_coordinador) REFERENCES usuario(id_usuario),
+    CONSTRAINT fk_coord_carrera  FOREIGN KEY (id_carrera)     REFERENCES carrera(id_carrera)
 );
 GO
 
 -- =============================================================
 --  5. DOCENTE  (subtabla)
---     id_docente = id_usuario (relación 1-1)
 -- =============================================================
 CREATE TABLE docente (
     id_docente   INT          NOT NULL,
     especialidad VARCHAR(100) NOT NULL,
-    CONSTRAINT pk_docente        PRIMARY KEY (id_docente),
-    CONSTRAINT fk_docente_usuario FOREIGN KEY (id_docente)
-        REFERENCES usuario(id_usuario)
+    CONSTRAINT pk_docente         PRIMARY KEY (id_docente),
+    CONSTRAINT fk_docente_usuario FOREIGN KEY (id_docente) REFERENCES usuario(id_usuario)
 );
 GO
 
@@ -119,10 +113,9 @@ CREATE TABLE materia (
     nombre     VARCHAR(150) NOT NULL,
     creditos   TINYINT      NOT NULL,
     id_carrera INT          NOT NULL,
-    CONSTRAINT pk_materia        PRIMARY KEY (id_materia),
-    CONSTRAINT uk_materia_clave  UNIQUE (clave),
-    CONSTRAINT fk_materia_carrera FOREIGN KEY (id_carrera)
-        REFERENCES carrera(id_carrera)
+    CONSTRAINT pk_materia         PRIMARY KEY (id_materia),
+    CONSTRAINT uk_materia_clave   UNIQUE (clave),
+    CONSTRAINT fk_materia_carrera FOREIGN KEY (id_carrera) REFERENCES carrera(id_carrera)
 );
 GO
 
@@ -163,18 +156,14 @@ CREATE TABLE oferta_academica (
     id_coordinador INT         NOT NULL,
     CONSTRAINT pk_oferta         PRIMARY KEY (id_oferta),
     CONSTRAINT chk_oferta_estado CHECK (estado IN ('borrador','publicada')),
-    CONSTRAINT fk_oferta_carrera FOREIGN KEY (id_carrera)
-        REFERENCES carrera(id_carrera),
-    CONSTRAINT fk_oferta_coord   FOREIGN KEY (id_coordinador)
-        REFERENCES coordinador(id_coordinador)
+    CONSTRAINT fk_oferta_carrera FOREIGN KEY (id_carrera)     REFERENCES carrera(id_carrera),
+    CONSTRAINT fk_oferta_coord   FOREIGN KEY (id_coordinador) REFERENCES coordinador(id_coordinador)
 );
 GO
 
 -- =============================================================
 --  10. GRUPO
 --      estado: 'disponible' | 'lleno' | 'cancelado'
---      uk_aula_horario:    un aula no puede tener 2 grupos a la vez
---      uk_docente_horario: un docente no puede dar 2 grupos a la vez
 -- =============================================================
 CREATE TABLE grupo (
     id_grupo        INT         NOT NULL IDENTITY(1,1),
@@ -189,19 +178,18 @@ CREATE TABLE grupo (
     id_oferta       INT         NOT NULL,
     CONSTRAINT pk_grupo           PRIMARY KEY (id_grupo),
     CONSTRAINT chk_grupo_estado   CHECK (estado IN ('disponible','lleno','cancelado')),
-    CONSTRAINT uk_aula_horario    UNIQUE (id_aula, id_horario),
+    CONSTRAINT uk_aula_horario    UNIQUE (id_aula,    id_horario),
     CONSTRAINT uk_docente_horario UNIQUE (id_docente, id_horario),
-    CONSTRAINT fk_grupo_materia   FOREIGN KEY (id_materia)  REFERENCES materia(id_materia),
-    CONSTRAINT fk_grupo_docente   FOREIGN KEY (id_docente)  REFERENCES docente(id_docente),
-    CONSTRAINT fk_grupo_aula      FOREIGN KEY (id_aula)     REFERENCES aula(id_aula),
-    CONSTRAINT fk_grupo_horario   FOREIGN KEY (id_horario)  REFERENCES horario(id_horario),
-    CONSTRAINT fk_grupo_oferta    FOREIGN KEY (id_oferta)   REFERENCES oferta_academica(id_oferta)
+    CONSTRAINT fk_grupo_materia   FOREIGN KEY (id_materia) REFERENCES materia(id_materia),
+    CONSTRAINT fk_grupo_docente   FOREIGN KEY (id_docente) REFERENCES docente(id_docente),
+    CONSTRAINT fk_grupo_aula      FOREIGN KEY (id_aula)    REFERENCES aula(id_aula),
+    CONSTRAINT fk_grupo_horario   FOREIGN KEY (id_horario) REFERENCES horario(id_horario),
+    CONSTRAINT fk_grupo_oferta    FOREIGN KEY (id_oferta)  REFERENCES oferta_academica(id_oferta)
 );
 GO
 
 -- =============================================================
 --  11. CARGA_ACADEMICA
---      estado: 'en_proceso' | 'finalizada' | 'cancelada'
 --      Un alumno solo puede tener una carga por periodo
 -- =============================================================
 CREATE TABLE carga_academica (
@@ -219,7 +207,6 @@ GO
 
 -- =============================================================
 --  12. LINEA_CARGA
---      Cada fila = un grupo inscrito en la carga del alumno
 -- =============================================================
 CREATE TABLE linea_carga (
     id_linea INT NOT NULL IDENTITY(1,1),
@@ -235,15 +222,11 @@ GO
 -- =============================================================
 --  TRIGGERS
 -- =============================================================
-
--- Al inscribir un grupo: reduce cupo y actualiza estado
 CREATE TRIGGER trg_linea_carga_insert
-ON linea_carga
-AFTER INSERT
+ON linea_carga AFTER INSERT
 AS
 BEGIN
     SET NOCOUNT ON;
-
     UPDATE grupo
     SET cupo_disponible = cupo_disponible - 1,
         estado = CASE WHEN cupo_disponible - 1 <= 0 THEN 'lleno' ELSE 'disponible' END
@@ -255,14 +238,11 @@ BEGIN
 END;
 GO
 
--- Al quitar un grupo: restaura cupo
 CREATE TRIGGER trg_linea_carga_delete
-ON linea_carga
-AFTER DELETE
+ON linea_carga AFTER DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
-
     UPDATE grupo
     SET cupo_disponible = cupo_disponible + 1,
         estado = 'disponible'
@@ -275,10 +255,8 @@ END;
 GO
 
 -- =============================================================
---  VISTAS  (actualizadas para usar usuario.nombre)
+--  VISTAS
 -- =============================================================
-
--- Grupos disponibles con toda su info (CU1 paso 2)
 CREATE VIEW vista_grupos_disponibles AS
 SELECT
     g.id_grupo,
@@ -307,11 +285,11 @@ WHERE g.estado = 'disponible'
   AND oa.estado = 'publicada';
 GO
 
--- Carga completa de un alumno (CU1 paso 5 / info escolar)
 CREATE VIEW vista_carga_alumno AS
 SELECT
-    ua.clave             AS matricula,
+    al.matricula,
     ua.nombre            AS alumno,
+    ua.email,
     ca.periodo,
     ca.estado            AS estado_carga,
     ca.total_grupos,
@@ -338,30 +316,24 @@ GO
 -- =============================================================
 --  DATOS DE PRUEBA
 -- =============================================================
-
--- Carrera
 INSERT INTO carrera (clave, nombre)
 VALUES ('ISC', 'Ingeniería en Sistemas Computacionales');
 GO
 
--- Usuarios (supertabla)
-INSERT INTO usuario (clave, password, nombre, tipo) VALUES
-('2021001234', 'utm2025', 'Juan Pérez García',        'alumno'),
-('COORD001',   'utm2025', 'M.C. Dinorah Meza García', 'coordinador'),
-('DOC001',     'utm2025', 'Dr. Tomás Aguilar Vega',   'docente');
+INSERT INTO usuario (email, password, nombre, tipo) VALUES
+('juan.perez@utm.edu.mx',     'utm2025', 'Juan Pérez García',        'alumno'),
+('dinorah.meza@utm.edu.mx',   'utm2025', 'M.C. Dinorah Meza García', 'coordinador'),
+('tomas.aguilar@utm.edu.mx',  'utm2025', 'Dr. Tomás Aguilar Vega',   'docente');
 GO
 
--- Subtabla alumno  (id_alumno = 1, el primer usuario insertado)
-INSERT INTO alumno (id_alumno, semestre, tipo_alumno, estado_pago, id_carrera)
-VALUES (1, 3, 'regular', 'vigente', 1);
+INSERT INTO alumno (id_alumno, matricula, semestre, tipo_alumno, estado_pago, id_carrera)
+VALUES (1, '2021001234', 3, 'regular', 'vigente', 1);
 GO
 
--- Subtabla coordinador  (id_coordinador = 2)
 INSERT INTO coordinador (id_coordinador, id_carrera)
 VALUES (2, 1);
 GO
 
--- Subtabla docente  (id_docente = 3)
 INSERT INTO docente (id_docente, especialidad)
 VALUES (3, 'Bases de Datos');
 GO
