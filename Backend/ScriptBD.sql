@@ -338,7 +338,6 @@ INSERT INTO docente (id_docente, especialidad)
 VALUES (3, 'Bases de Datos');
 GO
 
-
 -- =============================================================
 --  DATOS DE PRUEBA — Carga Académica UTM
 --  Alumno: Juan Pérez García (id=1, semestre 3, regular, vigente)
@@ -440,4 +439,43 @@ WHERE oa.periodo = '2025-A'
   AND oa.estado  = 'publicada'
   AND g.estado   = 'disponible'
 ORDER BY h.hora_inicio;
+GO
+
+-- =============================================================
+--  FIX: ajusta los horarios al rango visible del WeekGrid
+--  El grid por defecto muestra 07:00–20:00 con h1=20
+--  Todos los horarios quedan dentro del rango 07:00–15:00
+--  para que entren sin tener que cambiar opciones del grid.
+--  Si ya tienes los datos insertados, este UPDATE los corrige.
+-- =============================================================
+ 
+USE carga_academica_utm;
+GO
+ 
+-- Verificar antes cómo están
+SELECT id_horario, dias,
+       CONVERT(VARCHAR(5), hora_inicio, 108) AS inicio,
+       CONVERT(VARCHAR(5), hora_fin,    108) AS fin
+FROM horario
+ORDER BY id_horario;
+GO
+ 
+-- Los horarios MJ de tarde (ids 7 y 8) caen fuera del rango
+-- visible por defecto (h0=7, h1=15). Los ajustamos a mañana.
+-- Si prefieres ampliar el grid en vez de mover los horarios,
+-- usa la opción B de abajo.
+ 
+-- OPCIÓN A — mover los horarios de tarde a mañana (recomendado para pruebas)
+UPDATE horario SET hora_inicio = '07:00', hora_fin = '09:00' WHERE id_horario = 5;
+UPDATE horario SET hora_inicio = '09:00', hora_fin = '11:00' WHERE id_horario = 6;
+UPDATE horario SET hora_inicio = '11:00', hora_fin = '13:00' WHERE id_horario = 7;
+UPDATE horario SET hora_inicio = '13:00', hora_fin = '15:00' WHERE id_horario = 8;
+GO
+ 
+-- Verificar resultado
+SELECT id_horario, dias,
+       CONVERT(VARCHAR(5), hora_inicio, 108) AS inicio,
+       CONVERT(VARCHAR(5), hora_fin,    108) AS fin
+FROM horario
+ORDER BY id_horario;
 GO
