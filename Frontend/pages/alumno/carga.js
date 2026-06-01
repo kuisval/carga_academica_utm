@@ -6,16 +6,15 @@
 // =====================================================
 
 // ── Estado global ────────────────────────────────────
-let PERIODO    = '—';
-let CARGA_MAX  = 7;       // 7 regular · 4 irregular
-let oferta     = [];      // materias con grupos del API
-let inscritas  = {};      // { id_materia: grupoObj }
-let alumnoInfo = {};      // datos completos del alumno (getInfo)
-let alumnoOferta = {};    // { tipo_alumno, carrera } (getGrupos)
-let usuario    = {};      // sesión del sessionStorage
-let gruposEnDB = [];      // ids de grupos ya confirmados en BD
+let PERIODO      = '—';
+let CARGA_MAX    = 7;
+let oferta       = [];
+let inscritas    = {};
+let alumnoInfo   = {};
+let alumnoOferta = {};
+let usuario      = {};
+let gruposEnDB   = [];
 
-// Mapeo de nombres completos de días al formato corto del WeekGrid
 const DIAS_MAP = {
   'Lunes': 'Lun', 'Martes': 'Mar', 'Miércoles': 'Mié',
   'Jueves': 'Jue', 'Viernes': 'Vie'
@@ -44,7 +43,6 @@ async function cargarOferta() {
 
     await sincronizarInscritasDesdeDB();
 
-    renderInfoEscolar();
     renderCatalogo();
     renderCarga();
     renderHorario();
@@ -60,16 +58,11 @@ async function sincronizarInscritasDesdeDB() {
     const res  = await fetch(`${API_URL}/api/alumno/info?id_alumno=${usuario.id}`);
     const info = await res.json();
 
-    if (!res.ok || !info.grupos || info.grupos.length === 0) {
-      alumnoInfo = info.alumno || {};
-      return;
-    }
-    if (info.periodo !== PERIODO) {
-      alumnoInfo = info.alumno || {};
-      return;
-    }
-
     alumnoInfo = info.alumno || {};
+
+    if (!res.ok || !info.grupos || info.grupos.length === 0) return;
+    if (info.periodo !== PERIODO) return;
+
     gruposEnDB = info.grupos.map(g => g.id_grupo);
     inscritas  = {};
 
@@ -148,51 +141,11 @@ function inscritasToClases() {
 }
 
 // =====================================================
-//  RENDER — Información escolar
-// =====================================================
-function renderInfoEscolar() {
-  const sel  = Object.keys(inscritas).length;
-  const cred = creditosInscritos();
-
-  // Datos de perfil — usa alumnoInfo (getInfo) si está disponible,
-  // si no cae a alumnoOferta (getGrupos)
-  const nombre    = usuario.nombre || '—';
-  const email     = alumnoInfo.email      || '—';
-  const matricula = alumnoInfo.matricula  || '—';
-  const carrera   = alumnoInfo.carrera    || alumnoOferta.carrera || '—';
-  const semestre  = alumnoInfo.semestre   || '—';
-  const tipo      = (alumnoInfo.tipo_alumno || alumnoOferta.tipo_alumno) === 'irregular' ? 'Irregular' : 'Regular';
-  const pago      = alumnoInfo.estado_pago || 'vigente';
-
-  document.getElementById('info-subtitulo').textContent  = `${carrera} · ${PERIODO}`;
-  document.getElementById('info-nombre').textContent     = nombre;
-  document.getElementById('info-email').textContent      = email;
-  document.getElementById('info-matricula').textContent  = matricula;
-  document.getElementById('info-carrera').textContent    = carrera;
-  document.getElementById('info-semestre').textContent   = semestre ? `${semestre}°` : '—';
-  document.getElementById('info-tipo').textContent       = tipo;
-
-  const pagoBadge = document.getElementById('info-pago');
-  if (pago === 'vigente') {
-    pagoBadge.className   = 'badge badge--ok';
-    pagoBadge.textContent = 'Pago vigente';
-  } else {
-    pagoBadge.className   = 'badge badge--bad';
-    pagoBadge.textContent = 'Adeudo pendiente';
-  }
-
-  document.getElementById('info-materias-sel').textContent = sel;
-  document.getElementById('info-creditos-sel').textContent = cred;
-  document.getElementById('info-carga-max').textContent    = `${CARGA_MAX}`;
-  document.getElementById('info-estatus').textContent      = sel > 0 ? 'En proceso' : 'Sin carga';
-}
-
-// =====================================================
 //  RENDER — Catálogo de materias
 // =====================================================
 function renderCatalogo() {
-  const sel  = Object.keys(inscritas).length;
-  const cred = creditosInscritos();
+  const sel     = Object.keys(inscritas).length;
+  const cred    = creditosInscritos();
   const carrera = alumnoInfo.carrera || alumnoOferta.carrera || '—';
 
   document.getElementById('sel-count').textContent      = sel;
@@ -334,7 +287,7 @@ function renderCarga() {
 }
 
 // =====================================================
-//  RENDER — Mi horario (kardex + grid desde BD)
+//  RENDER — Mi horario
 // =====================================================
 function renderHorario() {
   const sel  = Object.entries(inscritas);
@@ -343,15 +296,15 @@ function renderHorario() {
 
   document.getElementById('horario-subtitulo').textContent = `${carrera} · ${PERIODO}`;
 
-  const empty   = document.getElementById('horario-empty');
-  const kardex  = document.getElementById('horario-kardex-wrap');
-  const listEl  = document.getElementById('horario-list');
+  const empty  = document.getElementById('horario-empty');
+  const kardex = document.getElementById('horario-kardex-wrap');
+  const listEl = document.getElementById('horario-list');
 
   if (sel.length === 0) {
     empty.style.display  = 'block';
     kardex.style.display = 'none';
     listEl.innerHTML     = '';
-    document.getElementById('weekgrid-horario').innerHTML = '';
+    document.getElementById('weekgrid-horario').innerHTML   = '';
     document.getElementById('horario-creditos-badge').textContent = '';
     return;
   }
@@ -359,14 +312,10 @@ function renderHorario() {
   empty.style.display  = 'none';
   kardex.style.display = 'block';
 
-  // Badge créditos
   document.getElementById('horario-creditos-badge').textContent = `${cred} créditos`;
+  document.getElementById('horario-total-mat').textContent      = sel.length;
+  document.getElementById('horario-total-cred').textContent     = cred;
 
-  // Totales
-  document.getElementById('horario-total-mat').textContent  = sel.length;
-  document.getElementById('horario-total-cred').textContent = cred;
-
-  // Tabla kardex
   const tbody = document.getElementById('horario-tbody');
   tbody.innerHTML = sel.map(([id_mat, gr], i) => {
     const mat = oferta.find(m => m.id_materia === Number(id_mat));
@@ -385,7 +334,6 @@ function renderHorario() {
     </tr>`;
   }).join('');
 
-  // Lista lateral
   listEl.innerHTML = sel.map(([id_mat, gr]) => {
     const mat = oferta.find(m => m.id_materia === Number(id_mat));
     return `<div class="list-item">
@@ -402,7 +350,6 @@ function renderHorario() {
     </div>`;
   }).join('');
 
-  // Grid semanal
   renderWeekGrid(document.getElementById('weekgrid-horario'), inscritasToClases());
 }
 
@@ -533,33 +480,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Íconos del shell
   fillShell(usuario, '—');
-  document.getElementById('header-user-role').textContent  = 'Alumno';
-  document.getElementById('header-period-icon').innerHTML  = icon('clock',    17);
-  document.getElementById('ico-bell').innerHTML            = icon('bell',     20);
-  document.getElementById('ico-logout').innerHTML          = icon('logout',   16, 2);
-  document.getElementById('ico-nav-id').innerHTML          = icon('id',       21);
-  document.getElementById('ico-nav-addbook').innerHTML     = icon('addbook',  21);
-  document.getElementById('ico-nav-doc').innerHTML         = icon('doc',      21);
-  document.getElementById('ico-nav-calendar').innerHTML    = icon('calendar', 21);
-  document.getElementById('ico-btn-check').innerHTML       = icon('check',    16, 2);
-  document.getElementById('ico-profile-user').innerHTML    = icon('user',     36, 1.4);
+  document.getElementById('header-user-role').textContent = 'Alumno';
+  document.getElementById('header-period-icon').innerHTML = icon('clock',    17);
+  document.getElementById('ico-bell').innerHTML           = icon('bell',     20);
+  document.getElementById('ico-logout').innerHTML         = icon('logout',   16, 2);
+  document.getElementById('ico-nav-id').innerHTML         = icon('id',       21);
+  document.getElementById('ico-nav-addbook').innerHTML    = icon('addbook',  21);
+  document.getElementById('ico-nav-doc').innerHTML        = icon('doc',      21);
+  document.getElementById('ico-nav-calendar').innerHTML   = icon('calendar', 21);
+  document.getElementById('ico-btn-check').innerHTML      = icon('check',    16, 2);
 
   // Cargar datos
   await cargarOferta();
 
+  // Botón información escolar → redirige a info_escolar.html
+  document.getElementById('btn-nav-info').addEventListener('click', () => {
+    window.location.href = 'info_escolar.html';
+  });
+
   // Navegación entre secciones
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+  document.querySelectorAll('.nav-btn[data-section]').forEach(btn => {
     btn.addEventListener('click', () => {
       const sec = btn.getAttribute('data-section');
       goSection(sec);
-      if (sec === 'sec-info')      renderInfoEscolar();
       if (sec === 'sec-seleccion') renderCatalogo();
       if (sec === 'sec-carga')     renderCarga();
       if (sec === 'sec-horario')   renderHorario();
     });
   });
 
-  // Event delegation — catálogo (registrado una sola vez)
+  // Event delegation — catálogo
   document.getElementById('catalogo-container').addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -570,13 +520,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (action === 'empalme') showToast('Empalme de horario', 'Este grupo se traslapa con otra materia seleccionada.', 'bad');
   });
 
-  // Event delegation — panel de selección (registrado una sola vez)
+  // Event delegation — panel de selección
   document.getElementById('sel-list').addEventListener('click', e => {
     const btn = e.target.closest('[data-action="quitar"]');
     if (btn) quitarMateria(Number(btn.dataset.idMat));
   });
 
-  // Baja de materia — event delegation en la lista de carga
+  // Event delegation — baja de materia
   document.getElementById('carga-list').addEventListener('click', e => {
     const btn = e.target.closest('[data-action="baja"]');
     if (btn) bajaMateria(Number(btn.dataset.idMat), Number(btn.dataset.idGrupo));
