@@ -525,3 +525,30 @@ GO
 UPDATE oferta_academica
 SET estado = 'borrador'
 WHERE id_oferta = 1;
+
+-- =============================================================
+--  FIX: agrega campo semestre a la tabla materia
+--  y actualiza los datos de prueba con el semestre correcto
+-- =============================================================
+ 
+USE carga_academica_utm;
+GO
+ 
+-- 1. Agregar columna semestre a materia
+ALTER TABLE materia
+  ADD semestre TINYINT NOT NULL DEFAULT 1;
+GO
+ 
+-- 2. Actualizar las materias de prueba con su semestre real
+--    (las 7 materias que insertamos son de 3er semestre ISC)
+UPDATE materia SET semestre = 3
+WHERE id_carrera = 1
+  AND clave IN ('ISC301','ISC302','ISC303','ISC304','ISC305','ISC306','ISC307');
+GO
+ 
+-- 3. Verificar
+SELECT id_materia, clave, nombre, creditos, semestre
+FROM materia
+WHERE id_carrera = 1
+ORDER BY semestre, clave;
+GO

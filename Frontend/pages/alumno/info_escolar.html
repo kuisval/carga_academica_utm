@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTM — Información Escolar</title>
+  <link rel="stylesheet" href="../../css/estilos.css" />
+  <style>
+    .two-col-inv { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
+    .info-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .profile-card { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px 20px; text-align: center; }
+    .profile-card__avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--tinto-200); display: flex; align-items: center; justify-content: center; color: var(--tinto-700); }
+    .profile-card__name  { font-weight: 800; font-size: 17px; color: var(--ink); }
+    .profile-card__meta  { font-size: 13px; color: var(--muted); }
+    .profile-card__badge { margin-top: 4px; }
+    .info-row        { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .info-row:last-child { border-bottom: none; }
+    .info-row__label { font-size: 13px; color: var(--muted); }
+    .info-row__value { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .section-subtitle { font-family: var(--logo); font-weight: 700; font-size: 18px; color: var(--ink); margin: 24px 0 14px; }
+    .empty-state { padding: 48px 0; text-align: center; color: var(--muted); font-size: 15px; }
+    .empty-state svg { display: block; margin: 0 auto 12px; opacity: .45; }
+    .loading-state { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 15px; padding: 40px 0; }
+    /* Retícula */
+    .reticula-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .reticula-semestre__titulo { font-size: 11px; font-weight: 800; color: var(--tinto-700); letter-spacing: .07em; text-transform: uppercase; padding: 10px 14px; background: var(--tinto-50); border-radius: 8px 8px 0 0; border-bottom: 2px solid var(--tinto-200); margin-bottom: 6px; }
+    .reticula-semestre__titulo.activo { background: var(--tinto-900); color: #fff; border-bottom-color: var(--tinto-700); }
+    .reticula-materia { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; margin-bottom: 6px; }
+    .reticula-materia__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: var(--line); }
+    .reticula-materia__dot.inscrita { background: var(--green); }
+    .reticula-materia__body { flex: 1; min-width: 0; }
+    .reticula-materia__nombre { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reticula-materia__clave { font-size: 11px; color: var(--muted); }
+    .reticula-materia__cred { font-size: 12px; font-weight: 700; color: var(--tinto-700); white-space: nowrap; }
+    .reticula-leyenda { display: flex; gap: 20px; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .reticula-leyenda__item { display: flex; align-items: center; gap: 6px; }
+    .reticula-leyenda__dot { width: 10px; height: 10px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-header">
+    <img src="../../assets/utm-icon-white.png" class="header-logo-img" alt="UTM" />
+    <div class="header-brand">
+      <div class="header-brand__utm">UTM</div>
+      <div class="header-brand__system">Sistema de Carga Académica Digital</div>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-period">
+      <span id="header-period-icon"></span>
+      <span id="header-period-text">—</span>
+    </div>
+    <button class="header-bell" title="Notificaciones">
+      <span id="ico-bell"></span>
+      <span class="header-bell__dot"></span>
+    </button>
+    <div class="header-divider"></div>
+    <div class="header-user">
+      <div class="header-user__name" id="header-user-name">—</div>
+      <div class="header-user__role" id="header-user-role">Alumno</div>
+    </div>
+    <button class="header-logout" id="btnLogout">
+      <span id="ico-logout"></span> Cerrar sesión
+    </button>
+  </header>
+
+  <div class="content-area">
+    <aside class="sidebar">
+      <div class="sidebar__label">Menú</div>
+      <nav class="sidebar__nav">
+        <button class="nav-btn active" data-section="sec-perfil">
+          <span class="nav-icon" id="ico-nav-id"></span>
+          <span>Perfil escolar</span>
+        </button>
+        <button class="nav-btn" data-section="sec-kardex">
+          <span class="nav-icon" id="ico-nav-doc"></span>
+          <span>Kardex</span>
+        </button>
+        <button class="nav-btn" data-section="sec-reticula">
+          <span class="nav-icon" id="ico-nav-grid"></span>
+          <span>Retícula</span>
+        </button>
+        <button class="nav-btn" data-section="sec-horario">
+          <span class="nav-icon" id="ico-nav-calendar"></span>
+          <span>Mi horario</span>
+        </button>
+        <button class="nav-btn" id="btn-nav-carga">
+          <span class="nav-icon" id="ico-nav-addbook"></span>
+          <span>Realizar carga</span>
+        </button>
+      </nav>
+      <div class="sidebar__spacer"></div>
+      <div class="sidebar__period-card">
+        <img src="../../assets/utm-icon.png" class="sidebar__period-bg" aria-hidden="true" />
+        <div class="sidebar__period-label">Periodo activo</div>
+        <div class="sidebar__period-name" id="sidebar-period-name">—</div>
+        <div class="sidebar__period-status">Inscripciones abiertas</div>
+      </div>
+      <div class="greca greca-small"></div>
+    </aside>
+
+    <main class="main-content">
+      <img src="../../assets/utm-icon.png" class="main-content__bg" aria-hidden="true" />
+      <div class="main-inner">
+
+        <!-- PERFIL -->
+        <section id="sec-perfil" class="section active">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Perfil escolar</h1>
+              <p class="page-header__sub" id="perfil-subtitulo">—</p>
+            </div>
+          </div>
+          <div id="perfil-loading" class="loading-state">
+            <span class="loader loader--tinto"></span> Cargando información…
+          </div>
+          <div id="perfil-content" style="display:none;">
+            <div class="info-grid">
+              <div class="card profile-card">
+                <div class="profile-card__avatar"><span id="ico-profile-user"></span></div>
+                <div class="profile-card__name" id="p-nombre">—</div>
+                <div class="profile-card__meta" id="p-email">—</div>
+                <div class="profile-card__badge"><span class="badge badge--ok" id="p-estado">Vigente</span></div>
+              </div>
+              <div class="card">
+                <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;">Datos académicos</div>
+                <div class="info-row"><span class="info-row__label">Matrícula</span>    <span class="info-row__value" id="p-matricula">—</span></div>
+                <div class="info-row"><span class="info-row__label">Carrera</span>      <span class="info-row__value" id="p-carrera">—</span></div>
+                <div class="info-row"><span class="info-row__label">Semestre</span>     <span class="info-row__value" id="p-semestre">—</span></div>
+                <div class="info-row"><span class="info-row__label">Tipo de alumno</span><span class="info-row__value" id="p-tipo">—</span></div>
+              </div>
+              <div class="card" style="grid-column:1/-1;">
+                <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;">Carga académica actual</div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+                  <div class="stat-card"><div class="stat-card__val" id="p-stat-materias">—</div><div class="stat-card__lbl">Materias</div></div>
+                  <div class="stat-card"><div class="stat-card__val" id="p-stat-creditos">—</div><div class="stat-card__lbl">Créditos</div></div>
+                  <div class="stat-card"><div class="stat-card__val" id="p-stat-periodo">—</div> <div class="stat-card__lbl">Periodo</div></div>
+                  <div class="stat-card"><div class="stat-card__val" id="p-stat-estado">—</div>  <div class="stat-card__lbl">Estado</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- KARDEX -->
+        <section id="sec-kardex" class="section">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Kardex</h1>
+              <p class="page-header__sub" id="kardex-subtitulo">Materias inscritas este periodo</p>
+            </div>
+            <span class="badge badge--tinto badge--lg" id="kardex-creditos-badge"></span>
+          </div>
+          <div id="kardex-loading" class="loading-state">
+            <span class="loader loader--tinto"></span> Cargando kardex…
+          </div>
+          <div id="kardex-content" style="display:none;">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr style="background:var(--tinto-900);color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">
+                    <th style="padding:12px 16px;text-align:left;">Clave</th>
+                    <th style="padding:12px 16px;text-align:left;">Materia</th>
+                    <th style="padding:12px 16px;text-align:left;">Grupo</th>
+                    <th style="padding:12px 16px;text-align:left;">Docente</th>
+                    <th style="padding:12px 16px;text-align:left;">Horario</th>
+                    <th style="padding:12px 16px;text-align:left;">Aula</th>
+                    <th style="padding:12px 8px;text-align:center;">Créditos</th>
+                  </tr>
+                </thead>
+                <tbody id="kardex-tbody"></tbody>
+              </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+              <div class="card" style="padding:14px 24px;display:flex;gap:32px;align-items:center;">
+                <span style="font-size:13px;color:var(--muted);">Total de materias:</span>
+                <span style="font-weight:800;font-size:18px;color:var(--tinto-700);" id="kardex-total-mat">—</span>
+                <span style="font-size:13px;color:var(--muted);">Total de créditos:</span>
+                <span style="font-weight:800;font-size:18px;color:var(--tinto-700);" id="kardex-total-cred">—</span>
+              </div>
+            </div>
+          </div>
+          <div id="kardex-empty" style="display:none;" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h4"/></svg>
+            No tienes materias inscritas en el periodo actual.<br>
+            <a href="carga.html" style="color:var(--tinto-700);font-weight:700;margin-top:8px;display:inline-block;">Ir a la carga académica →</a>
+          </div>
+        </section>
+
+        <!-- RETÍCULA -->
+        <section id="sec-reticula" class="section">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Retícula</h1>
+              <p class="page-header__sub" id="reticula-subtitulo">—</p>
+            </div>
+            <span class="badge badge--tinto badge--lg" id="reticula-badge"></span>
+          </div>
+          <div id="reticula-loading" class="loading-state">
+            <span class="loader loader--tinto"></span> Cargando retícula…
+          </div>
+          <div id="reticula-content" style="display:none;">
+            <div class="reticula-leyenda">
+              <div class="reticula-leyenda__item">
+                <div class="reticula-leyenda__dot" style="background:var(--green);"></div>
+                <span>Inscrita este periodo</span>
+              </div>
+              <div class="reticula-leyenda__item">
+                <div class="reticula-leyenda__dot" style="background:var(--line);"></div>
+                <span>Pendiente</span>
+              </div>
+            </div>
+            <div class="reticula-grid" id="reticula-grid"></div>
+          </div>
+        </section>
+
+        <!-- MI HORARIO -->
+        <section id="sec-horario" class="section">
+          <div class="page-header">
+            <div class="page-header__left">
+              <h1 class="page-header__title">Mi horario</h1>
+              <p class="page-header__sub" id="horario-subtitulo">—</p>
+            </div>
+          </div>
+          <div id="horario-loading" class="loading-state">
+            <span class="loader loader--tinto"></span> Cargando horario…
+          </div>
+          <div id="horario-content" style="display:none;">
+            <div class="two-col-inv">
+              <div style="display:flex;flex-direction:column;gap:10px;" id="horario-list"></div>
+              <div>
+                <div class="section-subtitle">Vista semanal</div>
+                <div id="weekgrid-horario"></div>
+              </div>
+            </div>
+          </div>
+          <div id="horario-empty" style="display:none;" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 8h16M7 3v3m10-3v3M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m3 9h2m3 0h2"/></svg>
+            Tu horario se generará una vez que completes tu carga académica.<br>
+            <a href="carga.html" style="color:var(--tinto-700);font-weight:700;margin-top:8px;display:inline-block;">Ir a la carga académica →</a>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../../js/app.js"></script>
+<script src="info_escolar.js"></script>
+</body>
+</html>

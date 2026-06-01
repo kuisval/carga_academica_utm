@@ -43,7 +43,7 @@
 
 <div class="app-shell">
 
-  <!-- ── Header ─────────────────────────────────────── -->
+  <!-- Header -->
   <header class="app-header">
     <img src="../../assets/utm-icon-white.png" class="header-logo-img" alt="UTM" />
     <div class="header-brand">
@@ -71,15 +71,16 @@
 
   <div class="content-area">
 
-    <!-- ── Sidebar ──────────────────────────────────── -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar__label">Menú</div>
       <nav class="sidebar__nav">
-        <button class="nav-btn active" data-section="sec-info">
+        <!-- Redirige a info_escolar.html en lugar de cambiar sección -->
+        <button class="nav-btn" id="btn-nav-info">
           <span class="nav-icon" id="ico-nav-id"></span>
           <span>Información escolar</span>
         </button>
-        <button class="nav-btn" data-section="sec-seleccion">
+        <button class="nav-btn active" data-section="sec-seleccion">
           <span class="nav-icon" id="ico-nav-addbook"></span>
           <span>Selección de materias</span>
         </button>
@@ -102,56 +103,13 @@
       <div class="greca greca-small"></div>
     </aside>
 
-    <!-- ── Main ─────────────────────────────────────── -->
+    <!-- Main -->
     <main class="main-content">
       <img src="../../assets/utm-icon.png" class="main-content__bg" aria-hidden="true" />
       <div class="main-inner">
 
-        <!-- ═══ SECCIÓN: Información escolar ══════════ -->
-        <section id="sec-info" class="section active">
-          <div class="page-header">
-            <div class="page-header__left">
-              <h1 class="page-header__title">Información escolar</h1>
-              <p class="page-header__sub" id="info-subtitulo">—</p>
-            </div>
-          </div>
-          <div class="info-grid">
-
-            <!-- Perfil -->
-            <div class="card profile-card">
-              <div class="profile-card__avatar">
-                <span id="ico-profile-user"></span>
-              </div>
-              <div class="profile-card__name" id="info-nombre">—</div>
-              <div class="profile-card__meta" id="info-email">—</div>
-              <span class="badge badge--ok" id="info-pago" style="margin-top:4px;">Vigente</span>
-            </div>
-
-            <!-- Datos académicos -->
-            <div class="card">
-              <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;">Datos académicos</div>
-              <div class="info-row"><span class="info-row__label">Matrícula</span>    <span class="info-row__value" id="info-matricula">—</span></div>
-              <div class="info-row"><span class="info-row__label">Carrera</span>      <span class="info-row__value" id="info-carrera">—</span></div>
-              <div class="info-row"><span class="info-row__label">Semestre</span>     <span class="info-row__value" id="info-semestre">—</span></div>
-              <div class="info-row"><span class="info-row__label">Tipo</span>         <span class="info-row__value" id="info-tipo">—</span></div>
-            </div>
-
-            <!-- Resumen carga -->
-            <div class="card" style="grid-column:1/-1;">
-              <div style="font-size:11px;font-weight:800;color:var(--tinto-700);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;">Carga académica actual</div>
-              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
-                <div class="stat-card"><div class="stat-card__val" id="info-materias-sel">—</div><div class="stat-card__lbl">Materias</div></div>
-                <div class="stat-card"><div class="stat-card__val" id="info-creditos-sel">—</div><div class="stat-card__lbl">Créditos</div></div>
-                <div class="stat-card"><div class="stat-card__val" id="info-carga-max">—</div>   <div class="stat-card__lbl">Máximo</div></div>
-                <div class="stat-card"><div class="stat-card__val" id="info-estatus">—</div>     <div class="stat-card__lbl">Estado</div></div>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- ═══ SECCIÓN: Selección de materias ════════ -->
-        <section id="sec-seleccion" class="section">
+        <!-- SECCIÓN: Selección de materias -->
+        <section id="sec-seleccion" class="section active">
           <div class="page-header">
             <div class="page-header__left">
               <h1 class="page-header__title">Selección de materias</h1>
@@ -188,7 +146,7 @@
           </div>
         </section>
 
-        <!-- ═══ SECCIÓN: Carga académica ══════════════ -->
+        <!-- SECCIÓN: Carga académica -->
         <section id="sec-carga" class="section">
           <div class="page-header">
             <div class="page-header__left">
@@ -206,7 +164,7 @@
           </div>
         </section>
 
-        <!-- ═══ SECCIÓN: Mi horario ════════════════════ -->
+        <!-- SECCIÓN: Mi horario -->
         <section id="sec-horario" class="section">
           <div class="page-header">
             <div class="page-header__left">
@@ -216,7 +174,6 @@
             <span class="badge badge--tinto badge--lg" id="horario-creditos-badge"></span>
           </div>
 
-          <!-- Kardex -->
           <div class="section-subtitle">Materias inscritas</div>
           <div id="horario-kardex-wrap">
             <div class="card" style="padding:0;overflow:hidden;">
@@ -245,14 +202,12 @@
             </div>
           </div>
 
-          <!-- Grid semanal -->
           <div class="section-subtitle" style="margin-top:28px;">Vista semanal</div>
           <div class="two-col-inv">
             <div style="display:flex;flex-direction:column;gap:10px;" id="horario-list"></div>
             <div id="weekgrid-horario"></div>
           </div>
 
-          <!-- Empty state -->
           <div id="horario-empty" style="display:none;" class="empty-state">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
               <path d="M4 8h16M7 3v3m10-3v3M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m3 9h2m3 0h2"/>

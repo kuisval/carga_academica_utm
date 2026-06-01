@@ -11,6 +11,7 @@ const getMaterias    = require('./handlers/coordinador/getMaterias');
 const crearGrupo     = require('./handlers/coordinador/crearGrupo');
 const eliminarGrupo  = require('./handlers/coordinador/eliminarGrupo');
 const publicarOferta = require('./handlers/coordinador/publicarOferta');
+const getReticula    = require('./handlers/alumno/getReticula');
 
 function handle(req, res) {
   const { method } = req;
@@ -32,6 +33,9 @@ function handle(req, res) {
 
   if (method === 'DELETE' && pathname === '/api/alumno/carga')
     return bajaMateria.handle(req, res);
+
+  if (method === 'GET'    && pathname === '/api/alumno/reticula')
+    return getReticula.handle(req, res);
 
   // ── COORDINADOR ───────────────────────────────────
   if (method === 'GET'    && pathname === '/api/coordinador/materias')
