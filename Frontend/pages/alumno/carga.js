@@ -23,7 +23,7 @@ const DIAS_MAP = {
 // =====================================================
 //  CARGA INICIAL DESDE EL API
 // =====================================================
-async function cargarOferta() {
+async function iniciarCarga() {
   try {
     const res  = await fetch(`${API_URL}/api/alumno/grupos?id_alumno=${usuario.id}`);
     const data = await res.json();
@@ -356,7 +356,7 @@ function renderHorario() {
 // =====================================================
 //  ACCIONES
 // =====================================================
-function toggleGrupo(id_materia, id_grupo) {
+function seleccionarGrupo(id_materia, id_grupo) {
   if (inscritas[id_materia]?.id_grupo === id_grupo) {
     delete inscritas[id_materia];
   } else {
@@ -378,7 +378,7 @@ function toggleGrupo(id_materia, id_grupo) {
   renderHorario();
 }
 
-function quitarMateria(id_materia) {
+function eliminarGrupo(id_materia) {
   delete inscritas[id_materia];
   renderCatalogo();
   renderCarga();
@@ -417,7 +417,7 @@ async function bajaMateria(id_materia, id_grupo) {
 // =====================================================
 //  CONFIRMAR INSCRIPCIÓN → POST /api/alumno/carga
 // =====================================================
-async function confirmarInscripcion() {
+async function finalizarCarga() {
   const btn = document.getElementById('btn-confirmar');
   btn.disabled  = true;
   btn.innerHTML = `<span class="loader"></span> Inscribiendo...`;
@@ -468,7 +468,7 @@ async function confirmarInscripcion() {
     showToast('Error en la inscripción', errores.join(' | '), 'bad');
   }
 
-  await cargarOferta();
+  await iniciarCarga();
 }
 
 // =====================================================
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('ico-btn-check').innerHTML      = icon('check',    16, 2);
 
   // Cargar datos
-  await cargarOferta();
+  await iniciarCarga();
 
   // Botón información escolar → redirige a info_escolar.html
   document.getElementById('btn-nav-info').addEventListener('click', () => {
@@ -516,14 +516,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const action     = btn.dataset.action;
     const id_materia = Number(btn.dataset.idMateria);
     const id_grupo   = Number(btn.dataset.idGrupo);
-    if (action === 'toggle')  toggleGrupo(id_materia, id_grupo);
+    if (action === 'toggle')  seleccionarGrupo(id_materia, id_grupo);
     if (action === 'empalme') showToast('Empalme de horario', 'Este grupo se traslapa con otra materia seleccionada.', 'bad');
   });
 
   // Event delegation — panel de selección
   document.getElementById('sel-list').addEventListener('click', e => {
     const btn = e.target.closest('[data-action="quitar"]');
-    if (btn) quitarMateria(Number(btn.dataset.idMat));
+    if (btn) eliminarGrupo(Number(btn.dataset.idMat));
   });
 
   // Event delegation — baja de materia
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Confirmar inscripción
-  document.getElementById('btn-confirmar').addEventListener('click', confirmarInscripcion);
+  document.getElementById('btn-confirmar').addEventListener('click', finalizarCarga);
 
   // Cerrar sesión
   document.getElementById('btnLogout').addEventListener('click', () => {
