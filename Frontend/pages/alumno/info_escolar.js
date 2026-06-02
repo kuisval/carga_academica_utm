@@ -30,9 +30,17 @@ function horaANum(t) {
   return h + (m || 0) / 60;
 }
 
+// Por esto:
+const DIAS_MAP = {
+  'Lunes': 'Lun', 'Martes': 'Mar', 'Miércoles': 'Mié',
+  'Jueves': 'Jue', 'Viernes': 'Vie'
+};
+
 function grupos2Clases(grupos) {
   return grupos.map(g => ({
-    dias:  g.horario.dias.split(/[,\-\s]+/).map(d => d.trim()).filter(Boolean),
+    dias:  g.horario.dias.split(/[,\-\s]+/)
+             .map(d => DIAS_MAP[d.trim()] || d.trim())
+             .filter(Boolean),
     ini:   horaANum(g.horario.hora_inicio),
     fin:   horaANum(g.horario.hora_fin),
     label: g.materia_clave,

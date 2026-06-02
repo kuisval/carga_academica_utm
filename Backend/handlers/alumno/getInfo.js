@@ -89,8 +89,8 @@ async function handle(req, res) {
           a.numero         AS aula_numero,
           a.edificio,
           h.dias,
-          h.hora_inicio,
-          h.hora_fin
+          CONVERT(varchar(5), h.hora_inicio, 108) AS hora_inicio,
+          CONVERT(varchar(5), h.hora_fin,    108) AS hora_fin 
         FROM linea_carga lc
         JOIN grupo    g  ON g.id_grupo   = lc.id_grupo
         JOIN materia  m  ON m.id_materia = g.id_materia

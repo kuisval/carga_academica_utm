@@ -406,7 +406,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Crear grupo
   document.getElementById('btn-crear').addEventListener('click', crearGrupo);
 
-  // Publicar oferta
+  // ← AQUÍ — Clave automática al seleccionar materia
+  document.getElementById('f-materia').addEventListener('change', () => {
+  const id_materia = Number(document.getElementById('f-materia').value);
+  if (!id_materia) {
+    document.getElementById('f-clave').value = '';
+    return;
+  }
+  const mat = catalogo.materias.find(m => m.id_materia === id_materia);
+  const existentes = grupos.filter(g => g.materia_clave === mat?.clave).length;
+  const letra = String.fromCharCode(65 + existentes);
+  document.getElementById('f-clave').value = `${mat.clave}-${letra}`;
+  });
+
+// Publicar oferta
   document.getElementById('btn-publicar').addEventListener('click', publicarOferta);
 
   // Eliminar grupo — event delegation en la tabla

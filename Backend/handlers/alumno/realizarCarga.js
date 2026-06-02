@@ -22,9 +22,9 @@ async function handle(req, res) {
     const alumnoRes = await pool.request()
       .input('id_alumno', sql.Int, id_alumno)
       .query(`
-        SELECT a.tipo_alumno, a.estado_pago, a.id_carrera
-        FROM alumno a
-        WHERE a.id_alumno = @id_alumno
+          SELECT a.tipo_alumno, a.estado_pago, a.id_carrera, a.semestre
+          FROM alumno a
+          WHERE a.id_alumno = @id_alumno
       `);
 
     if (alumnoRes.recordset.length === 0) {
@@ -43,10 +43,10 @@ async function handle(req, res) {
     const grupoRes = await pool.request()
       .input('id_grupo', sql.Int, id_grupo)
       .query(`
-        SELECT g.estado, g.cupo_disponible, g.id_horario, m.id_carrera
-        FROM grupo g
-        JOIN materia m ON g.id_materia = m.id_materia
-        WHERE g.id_grupo = @id_grupo
+          SELECT g.estado, g.cupo_disponible, g.id_horario, m.id_carrera, m.semestre
+          FROM grupo g
+          JOIN materia m ON g.id_materia = m.id_materia
+          WHERE g.id_grupo = @id_grupo
       `);
 
     if (grupoRes.recordset.length === 0) {
@@ -66,6 +66,15 @@ async function handle(req, res) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: 'El grupo no corresponde a tu carrera.' }));
     }
+
+    // 3.5 Verificar que la materia no sea de un semestre superior al alumno
+    if (grupo.semestre > alumno.semestre) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        error: `No puedes inscribir materias de semestres superiores al tuyo (semestre ${alumno.semestre}).`
+      }));
+    }
+    
 
     // 4. Obtener o crear la carga académica del alumno para este periodo
     let id_carga;
