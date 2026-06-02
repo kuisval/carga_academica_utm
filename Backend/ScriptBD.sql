@@ -526,6 +526,7 @@ UPDATE oferta_academica
 SET estado = 'borrador'
 WHERE id_oferta = 1;
 
+
 -- =============================================================
 --  FIX: agrega campo semestre a la tabla materia
 --  y actualiza los datos de prueba con el semestre correcto
@@ -552,3 +553,12 @@ FROM materia
 WHERE id_carrera = 1
 ORDER BY semestre, clave;
 GO
+
+-- Materias con 8 créditos → 6
+UPDATE materia SET creditos = 6 WHERE creditos = 8;
+
+-- Materias con 7 créditos → 5
+UPDATE materia SET creditos = 5 WHERE creditos = 7;
+
+-- Verificar resultado
+SELECT clave, nombre, creditos FROM materia ORDER BY creditos DESC;
